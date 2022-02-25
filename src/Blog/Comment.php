@@ -22,8 +22,13 @@ class Comment
 
     public function __toString()
     {
-        return $this->author . ' (ID: ' . $this->authorId . ') пишет: ' . PHP_EOL .
-            $this->text;
+        return sprintf(
+            "%s (ID: %d) пишет:%s%s",
+            $this->author,
+            $this->authorId,
+            PHP_EOL,
+            $this->text,
+        );
     }
 
     public function getId(): int

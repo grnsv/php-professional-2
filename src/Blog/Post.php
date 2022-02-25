@@ -19,8 +19,15 @@ class Post
 
     public function __toString()
     {
-        return $this->author . ' (ID: ' . $this->authorId . ') пишет: ' . PHP_EOL .
-            $this->title . ' >>> ' . $this->text;
+        return sprintf(
+            "%s (ID: %d) пишет:%s%s >>>%s%s",
+            $this->author,
+            $this->authorId,
+            PHP_EOL,
+            $this->title,
+            PHP_EOL,
+            $this->text,
+        );
     }
 
     public function getId(): int

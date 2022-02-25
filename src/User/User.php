@@ -16,8 +16,12 @@ class User
 
     public function __toString()
     {
-        return $this->firstName . ' ' . $this->lastName .
-            ' (на сайте с ' . $this->registeredOn->format('Y-m-d') . ')';
+        return sprintf(
+            "%s %s (на сайте с %s)",
+            $this->firstName,
+            $this->lastName,
+            $this->registeredOn->format('Y-m-d'),
+        );
     }
 
     public function getId(): int
