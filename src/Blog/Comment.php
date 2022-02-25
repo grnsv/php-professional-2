@@ -7,8 +7,8 @@ use GeekBrains\Blog\Post;
 
 class Comment
 {
-    private int $author_id;
-    private int $post_id;
+    private int $authorId;
+    private int $postId;
 
     public function __construct(
         private int $id,
@@ -16,13 +16,13 @@ class Comment
         private Post $post,
         private string $text
     ) {
-        $this->author_id = $author->getId();
-        $this->post_id = $post->getId();
+        $this->authorId = $author->getId();
+        $this->postId = $post->getId();
     }
 
     public function __toString()
     {
-        return $this->author . ' (ID: ' . $this->author_id . ') пишет: ' . PHP_EOL .
+        return $this->author . ' (ID: ' . $this->authorId . ') пишет: ' . PHP_EOL .
             $this->text;
     }
 

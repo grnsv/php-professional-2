@@ -6,7 +6,7 @@ use GeekBrains\User\User;
 
 class Post
 {
-    private int $author_id;
+    private int $authorId;
 
     public function __construct(
         private int $id,
@@ -14,12 +14,12 @@ class Post
         private string $title,
         private string $text
     ) {
-        $this->author_id = $author->getId();
+        $this->authorId = $author->getId();
     }
 
     public function __toString()
     {
-        return $this->author . ' (ID: ' . $this->author_id . ') пишет: ' . PHP_EOL .
+        return $this->author . ' (ID: ' . $this->authorId . ') пишет: ' . PHP_EOL .
             $this->title . ' >>> ' . $this->text;
     }
 
