@@ -1,63 +1,27 @@
 <?php
 
-require_once 'vendor/autoload.php';
+use App\Commands\CreateCommand;
+use App\Enums\Argument;
+use App\Exceptions\NotFoundException;
+use App\Factories\EntityManagerFactory;
+use App\Factories\EntityManagerFactoryInterface;
 
-use Faker\Factory;
-use GeekBrains\Blog\Post;
-use GeekBrains\User\User;
-use GeekBrains\Blog\Comment;
+try {
+    if (count($argv) < 2) {
+        throw new NotFoundException('404');
+    }
 
-$faker = Factory::create();
+    if (!in_array($argv[1], Argument::getArgumentValues())) {
+        throw new NotFoundException('404');
+    }
+    /**
+     * @var EntityManagerFactoryInterface $entityManger
+     */
+    $entityManger = EntityManagerFactory::getInstance();
 
-switch ($argv[1]) {
-
-    case 'user':
-        $user = new User(
-            rand(),
-            $faker->firstName(),
-            $faker->lastName(),
-            new DateTimeImmutable(),
-        );
-        echo $user . PHP_EOL;
-        break;
-
-    case 'post':
-        $post = new Post(
-            rand(),
-            new User(
-                rand(),
-                $faker->firstName(),
-                $faker->lastName(),
-                new DateTimeImmutable(),
-            ),
-            $faker->text(50),
-            $faker->text(100)
-        );
-        echo $post . PHP_EOL;
-        break;
-
-    case 'comment':
-        $comment = new Comment(
-            rand(),
-            new User(
-                rand(),
-                $faker->firstName(),
-                $faker->lastName(),
-                new DateTimeImmutable(),
-            ),
-            new Post(
-                rand(),
-                new User(
-                    rand(),
-                    $faker->firstName(),
-                    $faker->lastName(),
-                    new DateTimeImmutable(),
-                ),
-                $faker->text(50),
-                $faker->text(100)
-            ),
-            $faker->text(50)
-        );
-        echo $comment . PHP_EOL;
-        break;
+    $command = new CreateCommand($entityManger->getRepositoryByInputArguments($argv));
+    $command->handle($entityManger->createEntityByInputArguments($argv));
+} catch (Exception $exception) {
+    echo $exception->getMessage() . PHP_EOL;
+    http_response_code(404);
 }
