@@ -34,9 +34,9 @@ class ArticleDecorator extends Decorator implements DecoratorInterface
         $articleFieldData = $this->getFieldData();
 
         $this->id = $articleFieldData->get(self::ID) ?? null;
-        $this->authorId = $articleFieldData->get(self::AUTHOR_ID) ?? null;
-        $this->title = $articleFieldData->get(self::TITLE) ?? null;
-        $this->text = $articleFieldData->get(self::TEXT) ?? null;
+        $this->authorId = $articleFieldData->get(self::AUTHOR_ID);
+        $this->title = $articleFieldData->get(self::TITLE);
+        $this->text = $articleFieldData->get(self::TEXT);
     }
 
     public function getRequiredFields(): array

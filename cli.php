@@ -1,7 +1,7 @@
 <?php
 
-use App\Commands\CreateCommand;
 use App\Enums\Argument;
+use App\Commands\CreateCommand;
 use App\Exceptions\NotFoundException;
 use App\Factories\EntityManagerFactory;
 use App\Factories\EntityManagerFactoryInterface;
@@ -15,12 +15,12 @@ try {
         throw new NotFoundException('404');
     }
     /**
-     * @var EntityManagerFactoryInterface $entityManger
+     * @var EntityManagerFactoryInterface $entityManager
      */
-    $entityManger = EntityManagerFactory::getInstance();
+    $entityManager = EntityManagerFactory::getInstance();
 
-    $command = new CreateCommand($entityManger->getRepositoryByInputArguments($argv));
-    $command->handle($entityManger->createEntityByInputArguments($argv));
+    $command = new CreateCommand($entityManager->getRepositoryByInputArguments($argv));
+    $command->handle($entityManager->createEntityByInputArguments($argv));
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;
     http_response_code(404);

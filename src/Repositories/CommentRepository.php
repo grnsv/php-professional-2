@@ -4,8 +4,10 @@ namespace App\Repositories;
 
 use PDO;
 use PDOStatement;
+use App\Commands\GetCommand;
 use App\Entities\Comment\Comment;
 use App\Entities\EntityInterface;
+use App\Factories\EntityManagerFactory;
 use App\Exceptions\CommentNotFoundException;
 
 class CommentRepository extends EntityRepository implements CommentRepositoryInterface
@@ -20,13 +22,13 @@ class CommentRepository extends EntityRepository implements CommentRepositoryInt
          * @var Comment $entity
          */
         $statement =  $this->connector->getConnection()
-            ->prepare("INSERT INTO comments (author_id, article_id, 'text') 
-                VALUES (:author_id, :article_id, ':text')");
+            ->prepare("INSERT INTO comments (author_id, article_id, text) 
+                VALUES (:author_id, :article_id, :text)");
 
         $statement->execute(
             [
                 ':author_id' => $entity->getAuthor()->getId(),
-                ':article' => $entity->getArticle()->getId(),
+                ':article_id' => $entity->getArticle()->getId(),
                 ':text' => $entity->getText(),
             ]
         );
@@ -60,6 +62,16 @@ class CommentRepository extends EntityRepository implements CommentRepositoryInt
             );
         }
 
-        return new Comment($result['author_id'], $result['article_id'], $result['text']);
+        /**
+         * @var EntityManagerFactoryInterface $entityManager
+         */
+        $entityManager = EntityManagerFactory::getInstance();
+        $command = new GetCommand($entityManager->getRepository('user'));
+        $author = $command->handle($result['author_id']);
+        $command = new GetCommand($entityManager->getRepository('article'));
+        $article = $command->handle($result['article_id']);
+        $comment = new Comment($author, $article, $result['text']);
+        $comment->setId($commentId);
+        return $comment;
     }
 }

@@ -2,9 +2,8 @@
 
 namespace App\Factories;
 
-use App\Entities\User\User;
+use App\Enums\Argument;
 use JetBrains\PhpStorm\Pure;
-use App\Entities\EntityInterface;
 use App\Connections\SqliteConnector;
 use App\Repositories\UserRepository;
 use App\Connections\ConnectorInterface;
@@ -21,12 +20,12 @@ class RepositoryFactory implements RepositoryFactoryInterface
         $this->connector = $connector ?? new SqliteConnector();
     }
 
-    #[Pure] public function create(EntityInterface $entity): EntityRepositoryInterface
+    #[Pure] public function create(string $entityType): EntityRepositoryInterface
     {
-        return match ($entity::class) {
-            User::class => new UserRepository($this->connector),
-            Article::class => new ArticleRepository($this->connector),
-            Comment::class => new CommentRepository($this->connector),
+        return match ($entityType) {
+            Argument::USER->value => new UserRepository($this->connector),
+            Argument::ARTICLE->value => new ArticleRepository($this->connector),
+            Argument::COMMENT->value => new CommentRepository($this->connector),
         };
     }
 }

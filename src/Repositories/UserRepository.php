@@ -60,6 +60,8 @@ class UserRepository extends EntityRepository implements UserRepositoryInterface
             );
         }
 
-        return new User($result['first_name'], $result['last_name'], $result['email']);
+        $user = new User($result['first_name'], $result['last_name'], $result['email']);
+        $user->setId($userId);
+        return $user;
     }
 }

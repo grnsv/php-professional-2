@@ -2,27 +2,25 @@
 
 namespace App\Decorator;
 
-use App\Entities\User\User;
 use App\Decorator\Decorator;
-use App\Entities\Article\Article;
 use App\Exceptions\CommandException;
 use App\Exceptions\ArgumentException;
 
 class CommentDecorator extends Decorator implements DecoratorInterface
 {
     public const ID = 'id';
-    public const AUTHOR = 'author';
-    public const ARTICLE = 'article';
+    public const AUTHOR_ID = 'authorId';
+    public const ARTICLE_ID = 'articleId';
     public const TEXT = 'text';
 
     public ?int $id = null;
-    public User $author;
-    public Article $article;
+    public int $authorId;
+    public int $articleId;
     public string $text;
 
     public const REQUIRED_FIELDS = [
-        self::AUTHOR,
-        self::ARTICLE,
+        self::AUTHOR_ID,
+        self::ARTICLE_ID,
         self::TEXT,
     ];
 
@@ -36,9 +34,9 @@ class CommentDecorator extends Decorator implements DecoratorInterface
         $articleFieldData = $this->getFieldData();
 
         $this->id = $articleFieldData->get(self::ID) ?? null;
-        $this->author = $articleFieldData->get(self::AUTHOR) ?? null;
-        $this->title = $articleFieldData->get(self::ARTICLE) ?? null;
-        $this->text = $articleFieldData->get(self::TEXT) ?? null;
+        $this->authorId = $articleFieldData->get(self::AUTHOR_ID);
+        $this->articleId = $articleFieldData->get(self::ARTICLE_ID);
+        $this->text = $articleFieldData->get(self::TEXT);
     }
 
     public function getRequiredFields(): array

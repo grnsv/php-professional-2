@@ -34,9 +34,9 @@ class UserDecorator extends Decorator implements DecoratorInterface
         $userFieldData = $this->getFieldData();
 
         $this->id = $userFieldData->get(self::ID) ?? null;
-        $this->firstName = $userFieldData->get(self::FIRST_NAME) ?? null;
-        $this->lastName = $userFieldData->get(self::LAST_NAME) ?? null;
-        $this->email = $userFieldData->get(self::EMAIL) ?? null;
+        $this->firstName = $userFieldData->get(self::FIRST_NAME);
+        $this->lastName = $userFieldData->get(self::LAST_NAME);
+        $this->email = $userFieldData->get(self::EMAIL);
     }
 
     public function getRequiredFields(): array

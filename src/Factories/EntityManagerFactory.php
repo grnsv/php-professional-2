@@ -31,9 +31,9 @@ class EntityManagerFactory extends Factory implements EntityManagerFactoryInterf
         return $this->entityFactory->create($entityType, $arguments);
     }
 
-    public function getRepository(EntityInterface $entity): EntityRepositoryInterface
+    public function getRepository(string $entityType): EntityRepositoryInterface
     {
-        return $this->repositoryFactory->create($entity);
+        return $this->repositoryFactory->create($entityType);
     }
 
     /**
@@ -53,6 +53,6 @@ class EntityManagerFactory extends Factory implements EntityManagerFactoryInterf
      */
     public function getRepositoryByInputArguments(array $arguments): EntityRepositoryInterface
     {
-        return $this->getRepository($this->createEntityByInputArguments($arguments));
+        return $this->getRepository($arguments[1]);
     }
 }

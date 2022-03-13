@@ -4,8 +4,10 @@ namespace App\Repositories;
 
 use PDO;
 use PDOStatement;
+use App\Commands\GetCommand;
 use App\Entities\Article\Article;
 use App\Entities\EntityInterface;
+use App\Factories\EntityManagerFactory;
 use App\Exceptions\ArticleNotFoundException;
 
 class ArticleRepository extends EntityRepository implements ArticleRepositoryInterface
@@ -20,8 +22,8 @@ class ArticleRepository extends EntityRepository implements ArticleRepositoryInt
          * @var Article $entity
          */
         $statement =  $this->connector->getConnection()
-            ->prepare("INSERT INTO articles (author_id, title, 'text') 
-                VALUES (:author_id, :title, ':text')");
+            ->prepare("INSERT INTO articles (author_id, title, text) 
+                VALUES (:author_id, :title, :text)");
 
         $statement->execute(
             [
@@ -60,6 +62,14 @@ class ArticleRepository extends EntityRepository implements ArticleRepositoryInt
             );
         }
 
-        return new Article($result['author_id'], $result['title'], $result['text']);
+        /**
+         * @var EntityManagerFactoryInterface $entityManager
+         */
+        $entityManager = EntityManagerFactory::getInstance();
+        $command = new GetCommand($entityManager->getRepository('user'));
+        $author = $command->handle($result['author_id']);
+        $article = new Article($author, $result['title'], $result['text']);
+        $article->setId($articleId);
+        return $article;
     }
 }
