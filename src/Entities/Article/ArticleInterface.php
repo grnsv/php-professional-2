@@ -2,8 +2,8 @@
 
 namespace App\Entities\Article;
 
-use App\Entities\User\UserInterface;
 use App\Entities\EntityInterface;
+use App\Entities\User\UserInterface;
 
 interface ArticleInterface extends EntityInterface
 {
