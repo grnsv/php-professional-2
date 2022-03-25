@@ -2,12 +2,14 @@
 
 namespace App\Entities\Article;
 
-use App\Entities\User\User;
 use App\Traits\Id;
+use App\Entities\User\User;
 
 class Article implements ArticleInterface
 {
     use Id;
+
+    public const TABLE_NAME = 'articles';
 
     public function __construct(
         private User $author,
@@ -40,5 +42,10 @@ class Article implements ArticleInterface
             $this->getTitle(),
             $this->getText(),
         );
+    }
+
+    public function getTableName(): string
+    {
+        return static::TABLE_NAME;
     }
 }

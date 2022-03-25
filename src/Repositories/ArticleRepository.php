@@ -4,42 +4,20 @@ namespace App\Repositories;
 
 use PDO;
 use PDOStatement;
+use App\Entities\User\User;
 use App\Commands\GetCommand;
 use App\Entities\Article\Article;
-use App\Entities\EntityInterface;
 use App\Factories\EntityManagerFactory;
 use App\Exceptions\ArticleNotFoundException;
 
 class ArticleRepository extends EntityRepository implements ArticleRepositoryInterface
 {
     /**
-     * @param EntityInterface $entity
-     * @return void
-     */
-    public function save(EntityInterface $entity): void
-    {
-        /**
-         * @var Article $entity
-         */
-        $statement =  $this->connector->getConnection()
-            ->prepare("INSERT INTO articles (author_id, title, text) 
-                VALUES (:author_id, :title, :text)");
-
-        $statement->execute(
-            [
-                ':author_id' => $entity->getAuthor()->getId(),
-                ':title' => $entity->getTitle(),
-                ':text' => $entity->getText(),
-            ]
-        );
-    }
-
-    /**
      * @throws ArticleNotFoundException
      */
     public function get(int $id): Article
     {
-        $statement = $this->connector->getConnection()->prepare(
+        $statement = $this->connection->prepare(
             'SELECT * FROM articles WHERE id = :id'
         );
 
@@ -47,29 +25,28 @@ class ArticleRepository extends EntityRepository implements ArticleRepositoryInt
             ':id' => (string)$id,
         ]);
 
-        return $this->getArticle($statement, $id);
+        return $this->getArticle($statement);
     }
 
     /**
      * @throws ArticleNotFoundException
      */
-    private function getArticle(PDOStatement $statement, int $articleId): Article
+    private function getArticle(PDOStatement $statement): Article
     {
-        $result = $statement->fetch(PDO::FETCH_ASSOC);
-        if (false === $result) {
-            throw new ArticleNotFoundException(
-                sprintf("Cannot find article with id: %s", $articleId)
-            );
+        $result = $statement->fetch(PDO::FETCH_OBJ);
+
+        if (!$result) {
+            throw new ArticleNotFoundException('Article not found');
         }
 
         /**
-         * @var EntityManagerFactoryInterface $entityManager
+         * @var EntityManagerFactoryInterface $entityMangerFactory
          */
-        $entityManager = EntityManagerFactory::getInstance();
-        $command = new GetCommand($entityManager->getRepository('user'));
-        $author = $command->handle($result['author_id']);
-        $article = new Article($author, $result['title'], $result['text']);
-        $article->setId($articleId);
+        $entityMangerFactory = EntityManagerFactory::getInstance();
+        $command = new GetCommand($entityMangerFactory->getRepository(User::class));
+        $author = $command->handle($result->author_id);
+        $article = new Article($author, $result->title, $result->text);
+        $article->setId($result->id);
         return $article;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Factories;
 
 use App\Enums\Argument;
+use JetBrains\PhpStorm\Pure;
 use App\Decorator\UserDecorator;
 use App\Entities\EntityInterface;
 use App\Exceptions\MatchException;
@@ -17,7 +18,7 @@ class EntityFactory implements EntityFactoryInterface
     private ?ArticleFactoryInterface $articleFactory;
     private ?CommentFactoryInterface $commentFactory;
 
-    public function __construct(
+    #[Pure] public function __construct(
         UserFactoryInterface $userFactory = null,
         ArticleFactoryInterface $articleFactory = null,
         CommentFactoryInterface $commentFactory = null

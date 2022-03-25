@@ -2,10 +2,12 @@
 
 namespace App\Factories;
 
+use App\Managers\EntityManager;
 use App\Entities\EntityInterface;
 use App\Exceptions\MatchException;
 use App\Exceptions\CommandException;
 use App\Exceptions\ArgumentException;
+use App\Managers\EntityManagerInterface;
 use App\Repositories\EntityRepositoryInterface;
 
 class EntityManagerFactory extends Factory implements EntityManagerFactoryInterface
@@ -53,6 +55,11 @@ class EntityManagerFactory extends Factory implements EntityManagerFactoryInterf
      */
     public function getRepositoryByInputArguments(array $arguments): EntityRepositoryInterface
     {
-        return $this->getRepository($arguments[1]);
+        return $this->getRepository($this->createEntityByInputArguments($arguments)::class);
+    }
+
+    public function getEntityManager(): EntityManagerInterface
+    {
+        return new EntityManager();
     }
 }

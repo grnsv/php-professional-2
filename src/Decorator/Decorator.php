@@ -25,7 +25,6 @@ abstract class Decorator implements DecoratorInterface
      */
     public function getFieldData(): ArgumentInterface
     {
-        $this->argumentParserService = $argumentParserService ?? new ArgumentParserService();
         return $this->argumentParserService->parseRawInput($this->arguments, $this->getRequiredFields());
     }
 

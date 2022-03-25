@@ -8,6 +8,8 @@ class User implements UserInterface
 {
     use Id;
 
+    public const TABLE_NAME = 'users';
+
     public function __construct(
         private string $firstName,
         private string $lastName,
@@ -39,5 +41,10 @@ class User implements UserInterface
             $this->getLastName(),
             $this->getEmail(),
         );
+    }
+
+    public function getTableName(): string
+    {
+        return static::TABLE_NAME;
     }
 }

@@ -10,6 +10,8 @@ class Comment implements CommentInterface
 {
     use Id;
 
+    public const TABLE_NAME = 'comments';
+
     public function __construct(
         private User $author,
         private Article $article,
@@ -41,5 +43,10 @@ class Comment implements CommentInterface
             $this->getArticle(),
             $this->getText(),
         );
+    }
+
+    public function getTableName(): string
+    {
+        return static::TABLE_NAME;
     }
 }
