@@ -20,7 +20,7 @@ try {
      * @var EntityManagerFactoryInterface $entityMangerFactory
      */
     $entityMangerFactory = EntityManagerFactory::getInstance();
-    $entity =  $entityMangerFactory->createEntityByInputArguments($argv);
+    $entity = $entityMangerFactory->createEntityByInputArguments($argv);
     if ($entity instanceof User) {
         /**
          * @var UserRepositoryInterface $repository
