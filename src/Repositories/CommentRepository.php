@@ -4,7 +4,9 @@ namespace App\Repositories;
 
 use PDO;
 use PDOStatement;
+use App\Entities\User\User;
 use App\Commands\GetCommand;
+use App\Entities\Article\Article;
 use App\Entities\Comment\Comment;
 use App\Factories\EntityManagerFactory;
 use App\Exceptions\CommentNotFoundException;
@@ -42,9 +44,9 @@ class CommentRepository extends EntityRepository implements CommentRepositoryInt
          * @var EntityManagerFactoryInterface $entityMangerFactory
          */
         $entityMangerFactory = EntityManagerFactory::getInstance();
-        $command = new GetCommand($entityMangerFactory->getRepository('user'));
+        $command = new GetCommand($entityMangerFactory->getRepository(User::class));
         $author = $command->handle($result->author_id);
-        $command = new GetCommand($entityMangerFactory->getRepository('article'));
+        $command = new GetCommand($entityMangerFactory->getRepository(Article::class));
         $article = $command->handle($result->article_id);
         $comment = new Comment($author, $article, $result->text);
         $comment->setId($result->id);
