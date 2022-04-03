@@ -8,12 +8,12 @@ use Faker\Generator;
 use App\Drivers\Connection;
 use App\Entities\User\User;
 use PHPUnit\Framework\TestCase;
+use App\Entities\Article\Article;
 use App\Entities\Comment\Comment;
 use App\Commands\CreateEntityCommand;
-use App\Connections\ConnectorInterface;
+use App\Repositories\CommentRepository;
 use App\Exceptions\CommentNotFoundException;
 use App\Commands\CreateCommentCommandHandler;
-use App\Entities\Article\Article;
 
 class CreateCommentCommandTest extends TestCase
 {
@@ -55,10 +55,6 @@ class CreateCommentCommandTest extends TestCase
     public function testItSavesCommentToDatabase($author, $article, $text): void
     {
         /**
-         * @var Stub $connectorStub
-         */
-        $connectorStub = $this->createStub(ConnectorInterface::class);
-        /**
          * @var Stub $connectionStub
          */
         $connectionStub = $this->createStub(Connection::class);
@@ -67,7 +63,6 @@ class CreateCommentCommandTest extends TestCase
          */
         $statementMock = $this->createMock(PDOStatement::class);
 
-        $connectorStub->method('getConnection')->willReturn($connectionStub);
         $connectionStub->method('prepare')->willReturn($statementMock);
         $statementMock
             ->expects($this->once())
@@ -79,9 +74,9 @@ class CreateCommentCommandTest extends TestCase
             ]);
 
         /**
-         * @var ConnectorInterface $connectorStub
+         * @var Connection $connectionStub
          */
-        $createCommentCommandHandler = new CreateCommentCommandHandler($connectorStub);
+        $createCommentCommandHandler = new CreateCommentCommandHandler(new CommentRepository($connectionStub), $connectionStub);
 
         $command = new CreateEntityCommand(
             new Comment(

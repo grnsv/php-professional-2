@@ -2,18 +2,19 @@
 
 namespace App\Commands;
 
+use App\Drivers\Connection;
 use App\Entities\Comment\Comment;
-use App\Connections\SqliteConnector;
-use App\Connections\ConnectorInterface;
+use App\Repositories\CommentRepositoryInterface;
 
 class CreateCommentCommandHandler implements CommandHandlerInterface
 {
     private \PDOStatement|false $stmt;
 
-    public function __construct(private ?ConnectorInterface $connector = null)
-    {
-        $this->connector = $connector ?? new SqliteConnector();
-        $this->stmt = $this->connector->getConnection()->prepare($this->getSQL());
+    public function __construct(
+        private CommentRepositoryInterface $commentRepository,
+        private Connection $connection
+    ) {
+        $this->stmt = $connection->prepare($this->getSQL());
     }
 
     /**

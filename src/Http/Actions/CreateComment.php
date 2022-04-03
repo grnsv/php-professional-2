@@ -10,15 +10,11 @@ use App\Http\SuccessfulResponse;
 use App\Exceptions\HttpException;
 use App\Factories\EntityManagerFactory;
 use App\Commands\CreateCommentCommandHandler;
-use App\Repositories\CommentRepositoryInterface;
 
 class CreateComment implements ActionInterface
 {
-    public function __construct(
-        private ?CommentRepositoryInterface $commentRepository = null,
-        private ?CreateCommentCommandHandler $createCommentCommandHandler = null
-    ) {
-        $this->createCommentCommandHandler = $this->createCommentCommandHandler ?? new CreateCommentCommandHandler($this->commentRepository);
+    public function __construct(private CreateCommentCommandHandler $createCommentCommandHandler)
+    {
     }
 
     public function handle(Request $request): Response
@@ -39,7 +35,8 @@ class CreateComment implements ActionInterface
         }
 
         return new SuccessfulResponse([
-            'id' => $entity->getId(),
+            'authorId' => $entity->getAuthor()->getId(),
+            'articleId' => $entity->getArticle()->getId(),
         ]);
     }
 }
