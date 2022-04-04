@@ -52,4 +52,15 @@ class CommentRepository extends EntityRepository implements CommentRepositoryInt
         $comment->setId($result->id);
         return $comment;
     }
+
+    public function isExists(int $id): bool
+    {
+        try {
+            $this->get($id);
+        } catch (CommentNotFoundException) {
+            return false;
+        }
+
+        return true;
+    }
 }

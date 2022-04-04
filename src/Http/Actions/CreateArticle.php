@@ -10,15 +10,11 @@ use App\Http\SuccessfulResponse;
 use App\Exceptions\HttpException;
 use App\Factories\EntityManagerFactory;
 use App\Commands\CreateArticleCommandHandler;
-use App\Repositories\ArticleRepositoryInterface;
 
 class CreateArticle implements ActionInterface
 {
-    public function __construct(
-        private ?ArticleRepositoryInterface $articleRepository = null,
-        private ?CreateArticleCommandHandler $createArticleCommandHandler = null
-    ) {
-        $this->createArticleCommandHandler = $this->createArticleCommandHandler ?? new CreateArticleCommandHandler($this->articleRepository);
+    public function __construct(private CreateArticleCommandHandler $createArticleCommandHandler)
+    {
     }
 
     public function handle(Request $request): Response
@@ -39,7 +35,8 @@ class CreateArticle implements ActionInterface
         }
 
         return new SuccessfulResponse([
-            'id' => $entity->getId(),
+            'authorId' => $entity->getAuthor()->getId(),
+            'title' => $entity->getTitle(),
         ]);
     }
 }

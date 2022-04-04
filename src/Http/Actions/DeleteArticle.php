@@ -8,16 +8,13 @@ use App\Http\ErrorResponse;
 use App\Http\SuccessfulResponse;
 use App\Exceptions\HttpException;
 use App\Commands\DeleteEntityCommand;
+use App\Exceptions\ArticleNotFoundException;
 use App\Commands\DeleteArticleCommandHandler;
-use App\Repositories\ArticleRepositoryInterface;
 
 class DeleteArticle implements ActionInterface
 {
-    public function __construct(
-        private ?ArticleRepositoryInterface $articleRepository = null,
-        private ?DeleteArticleCommandHandler $deleteArticleCommandHandler = null
-    ) {
-        $this->deleteArticleCommandHandler = $this->deleteArticleCommandHandler ?? new DeleteArticleCommandHandler($this->articleRepository);
+    public function __construct(private DeleteArticleCommandHandler $deleteArticleCommandHandler)
+    {
     }
 
     public function handle(Request $request): Response
@@ -25,7 +22,7 @@ class DeleteArticle implements ActionInterface
         try {
             $id = $request->query('id');
             $this->deleteArticleCommandHandler->handle(new DeleteEntityCommand($id));
-        } catch (HttpException $exception) {
+        } catch (HttpException | ArticleNotFoundException $exception) {
             return new ErrorResponse($exception->getMessage());
         }
 

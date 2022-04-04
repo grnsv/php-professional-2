@@ -117,10 +117,6 @@ class FindByEmailTest extends TestCase
             ) {
             }
 
-            public function save(User $user): void
-            {
-            }
-
             public function get(int $id): User
             {
                 throw new UserNotFoundException("Not found");
@@ -135,6 +131,16 @@ class FindByEmailTest extends TestCase
                 }
 
                 throw new UserNotFoundException("Not found");
+            }
+
+            public function isExists(int $id): bool
+            {
+                return false;
+            }
+
+            public function isUserExists(string $email): bool
+            {
+                return false;
             }
         };
     }

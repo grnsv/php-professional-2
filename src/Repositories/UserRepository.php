@@ -60,4 +60,26 @@ class UserRepository extends EntityRepository implements UserRepositoryInterface
         $user->setId($result->id);
         return $user;
     }
+
+    public function isExists(int $id): bool
+    {
+        try {
+            $this->get($id);
+        } catch (UserNotFoundException) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function isUserExists(string $email): bool
+    {
+        try {
+            $this->getUserByEmail($email);
+        } catch (UserNotFoundException) {
+            return false;
+        }
+
+        return true;
+    }
 }

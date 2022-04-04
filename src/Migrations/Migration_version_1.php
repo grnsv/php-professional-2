@@ -25,6 +25,9 @@ class Migration_version_1 implements Migrations
             last_name VARCHAR(255) NOT NULL,
             CONSTRAINT users_PK PRIMARY KEY (id)
         );
+        ");
+
+        $this->connector->getConnection()->query("
         CREATE UNIQUE INDEX users_email_IDX ON users (email);
         ");
     }

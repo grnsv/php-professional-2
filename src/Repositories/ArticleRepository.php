@@ -49,4 +49,15 @@ class ArticleRepository extends EntityRepository implements ArticleRepositoryInt
         $article->setId($result->id);
         return $article;
     }
+
+    public function isExists(int $id): bool
+    {
+        try {
+            $this->get($id);
+        } catch (ArticleNotFoundException) {
+            return false;
+        }
+
+        return true;
+    }
 }

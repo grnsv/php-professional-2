@@ -2,10 +2,8 @@
 
 namespace App\Commands;
 
+use App\Drivers\Connection;
 use App\Entities\User\User;
-use App\Connections\SqliteConnector;
-use App\Connections\ConnectorInterface;
-use App\Exceptions\UserNotFoundException;
 use App\Exceptions\UserEmailExistsException;
 use App\Repositories\UserRepositoryInterface;
 
@@ -15,10 +13,9 @@ class CreateUserCommandHandler implements CommandHandlerInterface
 
     public function __construct(
         private UserRepositoryInterface $userRepository,
-        private ?ConnectorInterface $connector = null
+        private Connection $connection
     ) {
-        $this->connector = $connector ?? new SqliteConnector();
-        $this->stmt = $this->connector->getConnection()->prepare($this->getSQL());
+        $this->stmt = $connection->prepare($this->getSQL());
     }
 
     /**
@@ -33,7 +30,7 @@ class CreateUserCommandHandler implements CommandHandlerInterface
         $user = $command->getEntity();
         $email = $user->getEmail();
 
-        if (!$this->isUserExists($email)) {
+        if (!$this->userRepository->isUserExists($email)) {
             $this->stmt->execute(
                 [
                     ':firstName' => $user->getFirstName(),
@@ -44,17 +41,6 @@ class CreateUserCommandHandler implements CommandHandlerInterface
         } else {
             throw new UserEmailExistsException();
         }
-    }
-
-    private function isUserExists(string $email): bool
-    {
-        try {
-            $this->userRepository->getUserByEmail($email);
-        } catch (UserNotFoundException) {
-            return false;
-        }
-
-        return true;
     }
 
     public function getSQL(): string

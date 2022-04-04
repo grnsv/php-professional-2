@@ -55,7 +55,7 @@ class CreateUserTest extends TestCase
         /**
          * @var CreateUserCommandHandler $createUserCommandHandlerStub
          */
-        $action = new CreateUser(null, $createUserCommandHandlerStub);
+        $action = new CreateUser($createUserCommandHandlerStub);
 
         $response = $action->handle($request);
 
@@ -83,7 +83,7 @@ class CreateUserTest extends TestCase
         /**
          * @var CreateUserCommandHandler $createUserCommandHandlerStub
          */
-        $action = new CreateUser(null, $createUserCommandHandlerStub);
+        $action = new CreateUser($createUserCommandHandlerStub);
 
         $response = $action->handle($request);
 
@@ -117,7 +117,7 @@ class CreateUserTest extends TestCase
         /**
          * @var CreateUserCommandHandler $createUserCommandHandlerStub
          */
-        $action = new CreateUser(null, $createUserCommandHandlerStub);
+        $action = new CreateUser($createUserCommandHandlerStub);
 
         $response = $action->handle($request);
 

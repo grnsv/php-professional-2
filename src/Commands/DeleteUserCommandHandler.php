@@ -2,17 +2,19 @@
 
 namespace App\Commands;
 
-use App\Connections\SqliteConnector;
-use App\Connections\ConnectorInterface;
+use App\Drivers\Connection;
+use App\Exceptions\UserNotFoundException;
+use App\Repositories\UserRepositoryInterface;
 
 class DeleteUserCommandHandler implements CommandHandlerInterface
 {
     private \PDOStatement|false $stmt;
 
-    public function __construct(private ?ConnectorInterface $connector = null)
-    {
-        $this->connector = $connector ?? new SqliteConnector();
-        $this->stmt = $this->connector->getConnection()->prepare($this->getSQL());
+    public function __construct(
+        private UserRepositoryInterface $userRepository,
+        private Connection $connection
+    ) {
+        $this->stmt = $connection->prepare($this->getSQL());
     }
 
     /**
@@ -21,11 +23,15 @@ class DeleteUserCommandHandler implements CommandHandlerInterface
     public function handle(CommandInterface $command): void
     {
         $id = $command->getId();
-        $this->stmt->execute(
-            [
-                ':id' => (string)$id
-            ]
-        );
+        if ($this->userRepository->isExists($id)) {
+            $this->stmt->execute(
+                [
+                    ':id' => (string)$id
+                ]
+            );
+        } else {
+            throw new UserNotFoundException('User not found');
+        }
     }
 
     public function getSQL(): string
