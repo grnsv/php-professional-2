@@ -5,19 +5,19 @@ namespace App\Http\Actions;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\ErrorResponse;
+use Psr\Log\LoggerInterface;
 use App\Http\SuccessfulResponse;
 use App\Exceptions\HttpException;
 use App\Commands\DeleteEntityCommand;
+use App\Exceptions\CommentNotFoundException;
 use App\Commands\DeleteCommentCommandHandler;
-use App\Repositories\CommentRepositoryInterface;
 
 class DeleteComment implements ActionInterface
 {
     public function __construct(
-        private ?CommentRepositoryInterface $commentRepository = null,
-        private ?DeleteCommentCommandHandler $deleteCommentCommandHandler = null
+        private DeleteCommentCommandHandler $deleteCommentCommandHandler,
+        private LoggerInterface $logger,
     ) {
-        $this->deleteCommentCommandHandler = $this->deleteCommentCommandHandler ?? new DeleteCommentCommandHandler($this->commentRepository);
     }
 
     public function handle(Request $request): Response
@@ -25,8 +25,9 @@ class DeleteComment implements ActionInterface
         try {
             $id = $request->query('id');
             $this->deleteCommentCommandHandler->handle(new DeleteEntityCommand($id));
-        } catch (HttpException $exception) {
-            return new ErrorResponse($exception->getMessage());
+        } catch (HttpException | CommentNotFoundException $e) {
+            $this->logger->warning($e->getMessage());
+            return new ErrorResponse($e->getMessage());
         }
 
         return new SuccessfulResponse([

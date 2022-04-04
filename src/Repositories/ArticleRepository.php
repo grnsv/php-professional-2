@@ -4,14 +4,23 @@ namespace App\Repositories;
 
 use PDO;
 use PDOStatement;
+use App\Drivers\Connection;
 use App\Entities\User\User;
 use App\Commands\GetCommand;
+use Psr\Log\LoggerInterface;
 use App\Entities\Article\Article;
 use App\Factories\EntityManagerFactory;
 use App\Exceptions\ArticleNotFoundException;
 
 class ArticleRepository extends EntityRepository implements ArticleRepositoryInterface
 {
+    public function __construct(
+        Connection $connection,
+        private LoggerInterface $logger,
+    ) {
+        parent::__construct($connection);
+    }
+
     /**
      * @throws ArticleNotFoundException
      */
@@ -36,6 +45,7 @@ class ArticleRepository extends EntityRepository implements ArticleRepositoryInt
         $result = $statement->fetch(PDO::FETCH_OBJ);
 
         if (!$result) {
+            $this->logger->error('Article not found');
             throw new ArticleNotFoundException('Article not found');
         }
 
@@ -48,5 +58,16 @@ class ArticleRepository extends EntityRepository implements ArticleRepositoryInt
         $article = new Article($author, $result->title, $result->text);
         $article->setId($result->id);
         return $article;
+    }
+
+    public function isExists(int $id): bool
+    {
+        try {
+            $this->get($id);
+        } catch (ArticleNotFoundException) {
+            return false;
+        }
+
+        return true;
     }
 }

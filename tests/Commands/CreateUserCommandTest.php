@@ -2,15 +2,15 @@
 
 namespace Tests\Commands;
 
+use PDOStatement;
 use Faker\Factory;
 use Faker\Generator;
+use App\Drivers\Connection;
 use App\Entities\User\User;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
-use App\Entities\EntityInterface;
-use App\Drivers\PdoConnectionDriver;
 use App\Repositories\UserRepository;
 use App\Commands\CreateEntityCommand;
-use App\Connections\ConnectorInterface;
 use App\Exceptions\UserNotFoundException;
 use App\Commands\CreateUserCommandHandler;
 use App\Exceptions\UserEmailExistsException;
@@ -18,6 +18,8 @@ use App\Repositories\UserRepositoryInterface;
 
 class CreateUserCommandTest extends TestCase
 {
+    use LoggerTrait;
+
     private Generator $faker;
 
     public function __construct(
@@ -43,29 +45,26 @@ class CreateUserCommandTest extends TestCase
     public function testItThrowsAnExceptionWhenUserAlreadyExists($firstName, $lastName, $email): void
     {
         /**
-         * @var Stub $connectorStub
+         * @var Stub $connectionStub
          */
-        $connectorStub = $this->createStub(ConnectorInterface::class);
-
+        $connectionStub = $this->createStub(Connection::class);
+        $connectionStub->method('prepare')->willReturn(
+            $this->createStub(PDOStatement::class)
+        );
         /**
          * @var Stub $userRepositoryStub
          */
         $userRepositoryStub = $this->createStub(UserRepository::class);
-
-        $connectorStub->method('getConnection')->willReturn(
-            $this->createStub(PdoConnectionDriver::class)
-        );
-        $userRepositoryStub->method('getUserByEmail')->willReturn(
-            new User($firstName, $lastName, $email)
-        );
+        $userRepositoryStub->method('isUserExists')->willReturn(true);
 
         /**
-         * @var ConnectorInterface $connectorStub
          * @var UserRepository $userRepositoryStub
+         * @var Connection $connectionStub
          */
         $createUserCommandHandler = new CreateUserCommandHandler(
             $userRepositoryStub,
-            $connectorStub,
+            $connectionStub,
+            $this->getLogger(),
         );
 
         $this->expectException(UserEmailExistsException::class);
@@ -88,42 +87,39 @@ class CreateUserCommandTest extends TestCase
      */
     public function testItSavesUserToDatabase($firstName, $lastName, $email): void
     {
-        $userRepository = new class($firstName, $lastName, $email) implements UserRepositoryInterface
-        {
-            private bool $called = false;
+        /**
+         * @var Stub $connectionStub
+         */
+        $connectionStub = $this->createStub(Connection::class);
+        /**
+         * @var Stub $userRepositoryStub
+         */
+        $userRepositoryStub = $this->createStub(UserRepository::class);
+        /**
+         * @var MockObject $statementMock
+         */
+        $statementMock = $this->createMock(PDOStatement::class);
 
-            public function __construct(
-                private string $firstName,
-                private string $lastName,
-                private string $email
-            ) {
-            }
+        $userRepositoryStub->method('isUserExists')->willReturn(false);
+        $connectionStub->method('prepare')->willReturn($statementMock);
+        $statementMock
+            ->expects($this->once())
+            ->method('execute')
+            ->with([
+                ':firstName' => $firstName,
+                ':lastName' => $lastName,
+                ':email' => $email,
+            ]);
 
-            public function get(int $id): EntityInterface
-            {
-                throw new UserNotFoundException("Not found");
-            }
-
-            public function getUserByEmail(string $email): User
-            {
-                $this->called = true;
-                return new User(
-                    $this->firstName,
-                    $this->lastName,
-                    $this->email
-                );
-            }
-
-            public function wasCalled(): bool
-            {
-                return $this->called;
-            }
-        };
-
-        $createUserCommandHandler = new CreateUserCommandHandler($userRepository);
-
-        $this->expectException(UserEmailExistsException::class);
-        $this->expectExceptionMessage('Пользователь с таким email уже существует в системе');
+        /**
+         * @var UserRepositoryInterface $userRepositoryStub
+         * @var Connection $connectionStub
+         */
+        $createUserCommandHandler = new CreateUserCommandHandler(
+            $userRepositoryStub,
+            $connectionStub,
+            $this->getLogger(),
+        );
 
         $command = new CreateEntityCommand(
             new User(
@@ -134,6 +130,5 @@ class CreateUserCommandTest extends TestCase
         );
 
         $createUserCommandHandler->handle($command);
-        $this->assertTrue($userRepository->wasCalled());
     }
 }

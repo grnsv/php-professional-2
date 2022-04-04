@@ -5,19 +5,19 @@ namespace App\Http\Actions;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\ErrorResponse;
+use Psr\Log\LoggerInterface;
 use App\Http\SuccessfulResponse;
 use App\Exceptions\HttpException;
 use App\Commands\DeleteEntityCommand;
+use App\Exceptions\UserNotFoundException;
 use App\Commands\DeleteUserCommandHandler;
-use App\Repositories\UserRepositoryInterface;
 
 class DeleteUser implements ActionInterface
 {
     public function __construct(
-        private ?UserRepositoryInterface $userRepository = null,
-        private ?DeleteUserCommandHandler $deleteUserCommandHandler = null
+        private DeleteUserCommandHandler $deleteUserCommandHandler,
+        private LoggerInterface $logger,
     ) {
-        $this->deleteUserCommandHandler = $this->deleteUserCommandHandler ?? new DeleteUserCommandHandler($this->userRepository);
     }
 
     public function handle(Request $request): Response
@@ -25,8 +25,9 @@ class DeleteUser implements ActionInterface
         try {
             $id = $request->query('id');
             $this->deleteUserCommandHandler->handle(new DeleteEntityCommand($id));
-        } catch (HttpException $exception) {
-            return new ErrorResponse($exception->getMessage());
+        } catch (HttpException | UserNotFoundException $e) {
+            $this->logger->warning($e->getMessage());
+            return new ErrorResponse($e->getMessage());
         }
 
         return new SuccessfulResponse([

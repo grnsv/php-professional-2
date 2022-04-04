@@ -1,11 +1,12 @@
 <?php
 
-namespace Tests;
+namespace Tests\Actions;
 
 use Faker\Factory;
 use Faker\Generator;
 use App\Http\Request;
 use App\Http\ErrorResponse;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Http\Actions\CreateUser;
 use App\Http\SuccessfulResponse;
@@ -13,6 +14,8 @@ use App\Commands\CreateUserCommandHandler;
 
 class CreateUserTest extends TestCase
 {
+    use LoggerTrait;
+
     private Generator $faker;
 
     public function __construct(
@@ -55,7 +58,7 @@ class CreateUserTest extends TestCase
         /**
          * @var CreateUserCommandHandler $createUserCommandHandlerStub
          */
-        $action = new CreateUser(null, $createUserCommandHandlerStub);
+        $action = new CreateUser($createUserCommandHandlerStub, $this->getLogger());
 
         $response = $action->handle($request);
 
@@ -83,7 +86,7 @@ class CreateUserTest extends TestCase
         /**
          * @var CreateUserCommandHandler $createUserCommandHandlerStub
          */
-        $action = new CreateUser(null, $createUserCommandHandlerStub);
+        $action = new CreateUser($createUserCommandHandlerStub, $this->getLogger());
 
         $response = $action->handle($request);
 
@@ -117,7 +120,7 @@ class CreateUserTest extends TestCase
         /**
          * @var CreateUserCommandHandler $createUserCommandHandlerStub
          */
-        $action = new CreateUser(null, $createUserCommandHandlerStub);
+        $action = new CreateUser($createUserCommandHandlerStub, $this->getLogger());
 
         $response = $action->handle($request);
 

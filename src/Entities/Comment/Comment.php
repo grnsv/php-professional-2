@@ -2,36 +2,30 @@
 
 namespace App\Entities\Comment;
 
+use App\Traits\Id;
+use App\Traits\Text;
+use App\Traits\Author;
 use App\Entities\User\User;
 use App\Entities\Article\Article;
-use App\Traits\Id;
+use App\Traits\Article as TraitsArticle;
 
 class Comment implements CommentInterface
 {
     use Id;
+    use Author;
+    use TraitsArticle;
+    use Text;
 
     public const TABLE_NAME = 'comments';
 
     public function __construct(
-        private User $author,
-        private Article $article,
-        private string $text,
+        User $author,
+        Article $article,
+        string $text,
     ) {
-    }
-
-    public function getAuthor(): User
-    {
-        return $this->author;
-    }
-
-    public function getArticle(): Article
-    {
-        return $this->article;
-    }
-
-    public function getText(): string
-    {
-        return $this->text;
+        $this->author = $author;
+        $this->article = $article;
+        $this->text = $text;
     }
 
     public function __toString(): string

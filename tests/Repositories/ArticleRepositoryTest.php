@@ -4,27 +4,17 @@ namespace Tests\Repositories;
 
 use PDOStatement;
 use App\Drivers\Connection;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
-use App\Connections\ConnectorInterface;
 use App\Repositories\ArticleRepository;
 use App\Exceptions\ArticleNotFoundException;
 
 class ArticleRepositoryTest extends TestCase
 {
-    public function __construct(
-        ?string $name = null,
-        array $data = [],
-        $dataName = '',
-    ) {
-        parent::__construct($name, $data, $dataName);
-    }
+    use LoggerTrait;
 
     public function testItThrowsAnExceptionWhenArticleNotFound(): void
     {
-        /**
-         * @var Stub $connectorStub
-         */
-        $connectorStub = $this->createStub(ConnectorInterface::class);
         /**
          * @var Stub $connectionStub
          */
@@ -34,14 +24,13 @@ class ArticleRepositoryTest extends TestCase
          */
         $statementStub = $this->createStub(PDOStatement::class);
 
-        $connectorStub->method('getConnection')->willReturn($connectionStub);
         $connectionStub->method('prepare')->willReturn($statementStub);
         $statementStub->method('fetch')->willReturn(false);
 
         /**
-         * @var ConnectorInterface $connectorStub
+         * @var Connection $connectionStub
          */
-        $repository = new ArticleRepository($connectorStub);
+        $repository = new ArticleRepository($connectionStub, $this->getLogger());
 
         $this->expectException(ArticleNotFoundException::class);
         $this->expectExceptionMessage('Article not found');

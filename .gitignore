@@ -1,3 +1,5 @@
 /vendor
 /.vscode
 /coverage_report
+/.logs
+/.env

@@ -7,15 +7,18 @@ use Faker\Factory;
 use Faker\Generator;
 use App\Drivers\Connection;
 use App\Entities\User\User;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Entities\Article\Article;
 use App\Commands\CreateEntityCommand;
-use App\Connections\ConnectorInterface;
+use App\Repositories\ArticleRepository;
 use App\Exceptions\ArticleNotFoundException;
 use App\Commands\CreateArticleCommandHandler;
 
 class CreateArticleCommandTest extends TestCase
 {
+    use LoggerTrait;
+
     private Generator $faker;
 
     public function __construct(
@@ -48,10 +51,6 @@ class CreateArticleCommandTest extends TestCase
     public function testItSavesArticleToDatabase($author, $title, $text): void
     {
         /**
-         * @var Stub $connectorStub
-         */
-        $connectorStub = $this->createStub(ConnectorInterface::class);
-        /**
          * @var Stub $connectionStub
          */
         $connectionStub = $this->createStub(Connection::class);
@@ -60,7 +59,6 @@ class CreateArticleCommandTest extends TestCase
          */
         $statementMock = $this->createMock(PDOStatement::class);
 
-        $connectorStub->method('getConnection')->willReturn($connectionStub);
         $connectionStub->method('prepare')->willReturn($statementMock);
         $statementMock
             ->expects($this->once())
@@ -72,9 +70,13 @@ class CreateArticleCommandTest extends TestCase
             ]);
 
         /**
-         * @var ConnectorInterface $connectorStub
+         * @var Connection $connectionStub
          */
-        $createArticleCommandHandler = new CreateArticleCommandHandler($connectorStub);
+        $createArticleCommandHandler = new CreateArticleCommandHandler(
+            new ArticleRepository($connectionStub, $this->getLogger()),
+            $connectionStub,
+            $this->getLogger(),
+        );
 
         $command = new CreateEntityCommand(
             new Article(

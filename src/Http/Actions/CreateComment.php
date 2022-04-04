@@ -6,19 +6,18 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Enums\Argument;
 use App\Http\ErrorResponse;
+use Psr\Log\LoggerInterface;
 use App\Http\SuccessfulResponse;
 use App\Exceptions\HttpException;
 use App\Factories\EntityManagerFactory;
 use App\Commands\CreateCommentCommandHandler;
-use App\Repositories\CommentRepositoryInterface;
 
 class CreateComment implements ActionInterface
 {
     public function __construct(
-        private ?CommentRepositoryInterface $commentRepository = null,
-        private ?CreateCommentCommandHandler $createCommentCommandHandler = null
+        private CreateCommentCommandHandler $createCommentCommandHandler,
+        private LoggerInterface $logger,
     ) {
-        $this->createCommentCommandHandler = $this->createCommentCommandHandler ?? new CreateCommentCommandHandler($this->commentRepository);
     }
 
     public function handle(Request $request): Response
@@ -34,12 +33,14 @@ class CreateComment implements ActionInterface
                 ]
             );
             $entityMangerFactory->getEntityManager()->create($entity);
-        } catch (HttpException $exception) {
-            return new ErrorResponse($exception->getMessage());
+        } catch (HttpException $e) {
+            $this->logger->warning($e->getMessage());
+            return new ErrorResponse($e->getMessage());
         }
 
         return new SuccessfulResponse([
-            'id' => $entity->getId(),
+            'authorId' => $entity->getAuthor()->getId(),
+            'articleId' => $entity->getArticle()->getId(),
         ]);
     }
 }

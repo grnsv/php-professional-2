@@ -33,6 +33,7 @@ class FindArticleById implements ActionInterface
              */
             $article = $this->articleRepository->get($id);
         } catch (ArticleNotFoundException $e) {
+            $this->logger->warning($e->getMessage());
             return new ErrorResponse($e->getMessage());
         }
 

@@ -33,6 +33,7 @@ class FindCommentById implements ActionInterface
              */
             $comment = $this->commentRepository->get($id);
         } catch (CommentNotFoundException $e) {
+            $this->logger->warning($e->getMessage());
             return new ErrorResponse($e->getMessage());
         }
 

@@ -6,19 +6,18 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Enums\Argument;
 use App\Http\ErrorResponse;
+use Psr\Log\LoggerInterface;
 use App\Http\SuccessfulResponse;
 use App\Exceptions\HttpException;
 use App\Factories\EntityManagerFactory;
 use App\Commands\CreateArticleCommandHandler;
-use App\Repositories\ArticleRepositoryInterface;
 
 class CreateArticle implements ActionInterface
 {
     public function __construct(
-        private ?ArticleRepositoryInterface $articleRepository = null,
-        private ?CreateArticleCommandHandler $createArticleCommandHandler = null
+        private CreateArticleCommandHandler $createArticleCommandHandler,
+        private LoggerInterface $logger,
     ) {
-        $this->createArticleCommandHandler = $this->createArticleCommandHandler ?? new CreateArticleCommandHandler($this->articleRepository);
     }
 
     public function handle(Request $request): Response
@@ -34,12 +33,14 @@ class CreateArticle implements ActionInterface
                 ]
             );
             $entityMangerFactory->getEntityManager()->create($entity);
-        } catch (HttpException $exception) {
-            return new ErrorResponse($exception->getMessage());
+        } catch (HttpException $e) {
+            $this->logger->warning($e->getMessage());
+            return new ErrorResponse($e->getMessage());
         }
 
         return new SuccessfulResponse([
-            'id' => $entity->getId(),
+            'authorId' => $entity->getAuthor()->getId(),
+            'title' => $entity->getTitle(),
         ]);
     }
 }

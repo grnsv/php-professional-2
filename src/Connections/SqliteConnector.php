@@ -2,27 +2,25 @@
 
 namespace App\Connections;
 
-use App\config\SqliteConfig;
-
 class SqliteConnector extends Connector implements SqliteConnectorInterface
 {
     public function getDsn(): string
     {
-        return SqliteConfig::DSN;
+        return $_SERVER['DSN_DATABASE'];
     }
 
     public function getUserName(): string
     {
-        return SqliteConfig::USER_NAME;
+        return '';
     }
 
     public function getPassword(): string
     {
-        return SqliteConfig::PASSWORD;
+        return '';
     }
 
     public function getOptions(): array
     {
-        return SqliteConfig::OPTIONS;
+        return [];
     }
 }
