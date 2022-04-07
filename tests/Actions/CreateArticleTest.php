@@ -1,11 +1,12 @@
 <?php
 
-namespace Tests;
+namespace Tests\Actions;
 
 use Faker\Factory;
 use Faker\Generator;
 use App\Http\Request;
 use App\Http\ErrorResponse;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Http\SuccessfulResponse;
 use App\Http\Actions\CreateArticle;
@@ -13,6 +14,8 @@ use App\Commands\CreateArticleCommandHandler;
 
 class CreateArticleTest extends TestCase
 {
+    use LoggerTrait;
+
     private Generator $faker;
 
     public function __construct(
@@ -84,7 +87,7 @@ class CreateArticleTest extends TestCase
         /**
          * @var CreateArticleCommandHandler $createArticleCommandHandlerStub
          */
-        $action = new CreateArticle($createArticleCommandHandlerStub);
+        $action = new CreateArticle($createArticleCommandHandlerStub, $this->getLogger());
 
         $response = $action->handle($request);
 
@@ -118,7 +121,7 @@ class CreateArticleTest extends TestCase
         /**
          * @var CreateArticleCommandHandler $createArticleCommandHandlerStub
          */
-        $action = new CreateArticle($createArticleCommandHandlerStub);
+        $action = new CreateArticle($createArticleCommandHandlerStub, $this->getLogger());
 
         $response = $action->handle($request);
 

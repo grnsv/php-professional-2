@@ -7,6 +7,7 @@ use Faker\Factory;
 use Faker\Generator;
 use App\Drivers\Connection;
 use App\Entities\User\User;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Entities\Article\Article;
 use App\Commands\CreateEntityCommand;
@@ -16,6 +17,8 @@ use App\Commands\CreateArticleCommandHandler;
 
 class CreateArticleCommandTest extends TestCase
 {
+    use LoggerTrait;
+
     private Generator $faker;
 
     public function __construct(
@@ -69,7 +72,11 @@ class CreateArticleCommandTest extends TestCase
         /**
          * @var Connection $connectionStub
          */
-        $createArticleCommandHandler = new CreateArticleCommandHandler(new ArticleRepository($connectionStub), $connectionStub);
+        $createArticleCommandHandler = new CreateArticleCommandHandler(
+            new ArticleRepository($connectionStub, $this->getLogger()),
+            $connectionStub,
+            $this->getLogger(),
+        );
 
         $command = new CreateEntityCommand(
             new Article(

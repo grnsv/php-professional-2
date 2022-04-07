@@ -4,15 +4,24 @@ namespace App\Repositories;
 
 use PDO;
 use PDOStatement;
+use App\Drivers\Connection;
 use App\Entities\Like\Like;
 use App\Entities\User\User;
 use App\Commands\GetCommand;
+use Psr\Log\LoggerInterface;
 use App\Entities\Article\Article;
 use App\Factories\EntityManagerFactory;
 use App\Exceptions\LikeNotFoundException;
 
 class LikeRepository extends EntityRepository implements LikeRepositoryInterface
 {
+    public function __construct(
+        Connection $connection,
+        private LoggerInterface $logger,
+    ) {
+        parent::__construct($connection);
+    }
+
     /**
      * @throws LikeNotFoundException
      */
@@ -37,6 +46,7 @@ class LikeRepository extends EntityRepository implements LikeRepositoryInterface
         $result = $statement->fetch(PDO::FETCH_OBJ);
 
         if (!$result) {
+            $this->logger->error('Like not found');
             throw new LikeNotFoundException('Like not found');
         }
 

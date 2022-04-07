@@ -4,12 +4,15 @@ namespace Tests\Repositories;
 
 use PDOStatement;
 use App\Drivers\Connection;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Repositories\ArticleRepository;
 use App\Exceptions\ArticleNotFoundException;
 
 class ArticleRepositoryTest extends TestCase
 {
+    use LoggerTrait;
+
     public function testItThrowsAnExceptionWhenArticleNotFound(): void
     {
         /**
@@ -27,7 +30,7 @@ class ArticleRepositoryTest extends TestCase
         /**
          * @var Connection $connectionStub
          */
-        $repository = new ArticleRepository($connectionStub);
+        $repository = new ArticleRepository($connectionStub, $this->getLogger());
 
         $this->expectException(ArticleNotFoundException::class);
         $this->expectExceptionMessage('Article not found');

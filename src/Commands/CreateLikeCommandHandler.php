@@ -4,17 +4,16 @@ namespace App\Commands;
 
 use App\Drivers\Connection;
 use App\Entities\Like\Like;
+use Psr\Log\LoggerInterface;
 use App\Repositories\LikeRepositoryInterface;
 
 class CreateLikeCommandHandler implements CommandHandlerInterface
 {
-    private \PDOStatement|false $stmt;
-
     public function __construct(
         private LikeRepositoryInterface $likeRepository,
-        private Connection $connection
+        private Connection $connection,
+        private LoggerInterface $logger,
     ) {
-        $this->stmt = $connection->prepare($this->getSQL());
     }
 
     /**
@@ -22,21 +21,29 @@ class CreateLikeCommandHandler implements CommandHandlerInterface
      */
     public function handle(CommandInterface $command): void
     {
+        $this->logger->info("Create like command started");
+
         /**
          * @var Like $like
          */
         $like = $command->getEntity();
-        $this->stmt->execute(
+        $userId = $like->getUser()->getId();
+        $articleId = $like->getArticle()->getId();
+
+        $result = $this->connection->prepare($this->getSQL())->execute(
             [
-                ':author_id' => $like->getUser()->getId(),
-                ':article_id' => $like->getArticle()->getId(),
+                ':user_id' => $userId,
+                ':article_id' => $articleId,
             ]
         );
+        if ($result) {
+            $this->logger->info("Like created userId: $userId articleId: $articleId");
+        }
     }
 
     public function getSQL(): string
     {
-        return "INSERT INTO likes (author_id, article_id) 
-        VALUES (:author_id, :article_id)";
+        return "INSERT INTO likes (user_id, article_id) 
+        VALUES (:user_id, :article_id)";
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Actions;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\ErrorResponse;
+use Psr\Log\LoggerInterface;
 use App\Http\SuccessfulResponse;
 use App\Exceptions\HttpException;
 use App\Commands\DeleteEntityCommand;
@@ -13,8 +14,10 @@ use App\Commands\DeleteArticleCommandHandler;
 
 class DeleteArticle implements ActionInterface
 {
-    public function __construct(private DeleteArticleCommandHandler $deleteArticleCommandHandler)
-    {
+    public function __construct(
+        private DeleteArticleCommandHandler $deleteArticleCommandHandler,
+        private LoggerInterface $logger,
+    ) {
     }
 
     public function handle(Request $request): Response
@@ -22,8 +25,9 @@ class DeleteArticle implements ActionInterface
         try {
             $id = $request->query('id');
             $this->deleteArticleCommandHandler->handle(new DeleteEntityCommand($id));
-        } catch (HttpException | ArticleNotFoundException $exception) {
-            return new ErrorResponse($exception->getMessage());
+        } catch (HttpException | ArticleNotFoundException $e) {
+            $this->logger->warning($e->getMessage());
+            return new ErrorResponse($e->getMessage());
         }
 
         return new SuccessfulResponse([

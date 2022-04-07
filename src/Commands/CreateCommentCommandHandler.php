@@ -3,18 +3,17 @@
 namespace App\Commands;
 
 use App\Drivers\Connection;
+use Psr\Log\LoggerInterface;
 use App\Entities\Comment\Comment;
 use App\Repositories\CommentRepositoryInterface;
 
 class CreateCommentCommandHandler implements CommandHandlerInterface
 {
-    private \PDOStatement|false $stmt;
-
     public function __construct(
         private CommentRepositoryInterface $commentRepository,
-        private Connection $connection
+        private Connection $connection,
+        private LoggerInterface $logger,
     ) {
-        $this->stmt = $connection->prepare($this->getSQL());
     }
 
     /**
@@ -22,17 +21,25 @@ class CreateCommentCommandHandler implements CommandHandlerInterface
      */
     public function handle(CommandInterface $command): void
     {
+        $this->logger->info("Create comment command started");
+
         /**
          * @var Comment $comment
          */
         $comment = $command->getEntity();
-        $this->stmt->execute(
+        $authorId = $comment->getAuthor()->getId();
+        $articleId = $comment->getArticle()->getId();
+
+        $result = $this->connection->prepare($this->getSQL())->execute(
             [
-                ':author_id' => $comment->getAuthor()->getId(),
-                ':article_id' => $comment->getArticle()->getId(),
+                ':author_id' => $authorId,
+                ':article_id' => $articleId,
                 ':text' => $comment->getText(),
             ]
         );
+        if ($result) {
+            $this->logger->info("Comment created authorId: $authorId articleId: $articleId");
+        }
     }
 
     public function getSQL(): string

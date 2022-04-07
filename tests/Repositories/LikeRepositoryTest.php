@@ -8,6 +8,7 @@ use Faker\Generator;
 use App\Drivers\Connection;
 use App\Entities\Like\Like;
 use App\Entities\User\User;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Entities\Article\Article;
 use App\Repositories\LikeRepository;
@@ -15,6 +16,8 @@ use App\Exceptions\LikeNotFoundException;
 
 class LikeRepositoryTest extends TestCase
 {
+    use LoggerTrait;
+
     private Generator $faker;
 
     public function __construct(
@@ -81,7 +84,7 @@ class LikeRepositoryTest extends TestCase
         /**
          * @var Connection $connectionStub
          */
-        $repository = new LikeRepository($connectionStub);
+        $repository = new LikeRepository($connectionStub, $this->getLogger());
 
         $this->expectException(LikeNotFoundException::class);
         $this->expectExceptionMessage('Like not found');
@@ -109,7 +112,7 @@ class LikeRepositoryTest extends TestCase
         /**
          * @var Connection $connectionStub
          */
-        $repository = new LikeRepository($connectionStub);
+        $repository = new LikeRepository($connectionStub, $this->getLogger());
         $likes = $repository->getByArticleId($articleId);
 
         $this->assertEquals($expectedValue, $likes);

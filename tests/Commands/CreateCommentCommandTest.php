@@ -7,6 +7,7 @@ use Faker\Factory;
 use Faker\Generator;
 use App\Drivers\Connection;
 use App\Entities\User\User;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Entities\Article\Article;
 use App\Entities\Comment\Comment;
@@ -17,6 +18,8 @@ use App\Commands\CreateCommentCommandHandler;
 
 class CreateCommentCommandTest extends TestCase
 {
+    use LoggerTrait;
+
     private Generator $faker;
 
     public function __construct(
@@ -76,7 +79,11 @@ class CreateCommentCommandTest extends TestCase
         /**
          * @var Connection $connectionStub
          */
-        $createCommentCommandHandler = new CreateCommentCommandHandler(new CommentRepository($connectionStub), $connectionStub);
+        $createCommentCommandHandler = new CreateCommentCommandHandler(
+            new CommentRepository($connectionStub, $this->getLogger()),
+            $connectionStub,
+            $this->getLogger(),
+        );
 
         $command = new CreateEntityCommand(
             new Comment(

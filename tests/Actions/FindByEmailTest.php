@@ -1,12 +1,13 @@
 <?php
 
-namespace Tests;
+namespace Tests\Actions;
 
 use Faker\Factory;
 use Faker\Generator;
 use App\Http\Request;
 use App\Entities\User\User;
 use App\Http\ErrorResponse;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Http\SuccessfulResponse;
 use App\Http\Actions\FindByEmail;
@@ -15,6 +16,8 @@ use App\Repositories\UserRepositoryInterface;
 
 class FindByEmailTest extends TestCase
 {
+    use LoggerTrait;
+
     private Generator $faker;
 
     public function __construct(
@@ -43,7 +46,7 @@ class FindByEmailTest extends TestCase
         $request = new Request([], [], '');
         $userRepository = $this->getUserRepository([]);
 
-        $action = new FindByEmail($userRepository);
+        $action = new FindByEmail($userRepository, $this->getLogger());
         $response = $action->handle($request);
 
         $this->assertInstanceOf(ErrorResponse::class, $response);
@@ -65,7 +68,7 @@ class FindByEmailTest extends TestCase
         $request = new Request(['email' => $email], [], '');
 
         $userRepository = $this->getUserRepository([]);
-        $action = new FindByEmail($userRepository);
+        $action = new FindByEmail($userRepository, $this->getLogger());
 
         $response = $action->handle($request);
         $this->assertInstanceOf(ErrorResponse::class, $response);
@@ -91,7 +94,7 @@ class FindByEmailTest extends TestCase
             ),
         ]);
 
-        $action = new FindByEmail($userRepository);
+        $action = new FindByEmail($userRepository, $this->getLogger());
         $response = $action->handle($request);
 
         $this->assertInstanceOf(SuccessfulResponse::class, $response);

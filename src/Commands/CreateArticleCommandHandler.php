@@ -3,18 +3,17 @@
 namespace App\Commands;
 
 use App\Drivers\Connection;
+use Psr\Log\LoggerInterface;
 use App\Entities\Article\Article;
 use App\Repositories\ArticleRepositoryInterface;
 
 class CreateArticleCommandHandler implements CommandHandlerInterface
 {
-    private \PDOStatement|false $stmt;
-
     public function __construct(
         private ArticleRepositoryInterface $articleRepository,
-        private Connection $connection
+        private Connection $connection,
+        private LoggerInterface $logger,
     ) {
-        $this->stmt = $connection->prepare($this->getSQL());
     }
 
     /**
@@ -22,17 +21,25 @@ class CreateArticleCommandHandler implements CommandHandlerInterface
      */
     public function handle(CommandInterface $command): void
     {
+        $this->logger->info("Create article command started");
+
         /**
          * @var Article $article
          */
         $article = $command->getEntity();
-        $this->stmt->execute(
+        $authorId = $article->getAuthor()->getId();
+        $title = $article->getTitle();
+
+        $result = $this->connection->prepare($this->getSQL())->execute(
             [
-                ':author_id' => $article->getAuthor()->getId(),
-                ':title' => $article->getTitle(),
+                ':author_id' => $authorId,
+                ':title' => $title,
                 ':text' => $article->getText(),
             ]
         );
+        if ($result) {
+            $this->logger->info("Article created authorId: $authorId title: $title");
+        }
     }
 
     public function getSQL(): string

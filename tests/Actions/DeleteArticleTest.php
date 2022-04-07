@@ -1,11 +1,12 @@
 <?php
 
-namespace Tests;
+namespace Tests\Actions;
 
 use PDOStatement;
 use App\Http\Request;
 use App\Drivers\Connection;
 use App\Http\ErrorResponse;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Http\SuccessfulResponse;
 use App\Http\Actions\DeleteArticle;
@@ -14,6 +15,8 @@ use App\Commands\DeleteArticleCommandHandler;
 
 class DeleteArticleTest extends TestCase
 {
+    use LoggerTrait;
+
     public function argumentsProvider(): iterable
     {
         return
@@ -36,7 +39,7 @@ class DeleteArticleTest extends TestCase
         /**
          * @var DeleteArticleCommandHandler $deleteArticleCommandHandler
          */
-        $action = new DeleteArticle($deleteArticleCommandHandler);
+        $action = new DeleteArticle($deleteArticleCommandHandler, $this->getLogger());
 
         $response = $action->handle($request);
 
@@ -64,7 +67,7 @@ class DeleteArticleTest extends TestCase
         /**
          * @var DeleteArticleCommandHandler $deleteArticleCommandHandler
          */
-        $action = new DeleteArticle($deleteArticleCommandHandler);
+        $action = new DeleteArticle($deleteArticleCommandHandler, $this->getLogger());
 
         $response = $action->handle($request);
 
@@ -105,11 +108,12 @@ class DeleteArticleTest extends TestCase
         $deleteArticleCommandHandler = new DeleteArticleCommandHandler(
             $articleRepositoryStub,
             $connectionStub,
+            $this->getLogger(),
         );
         /**
          * @var DeleteArticleCommandHandler $deleteArticleCommandHandler
          */
-        $action = new DeleteArticle($deleteArticleCommandHandler);
+        $action = new DeleteArticle($deleteArticleCommandHandler, $this->getLogger());
 
         $response = $action->handle($request);
 

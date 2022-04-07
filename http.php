@@ -2,6 +2,7 @@
 
 use App\Http\Request;
 use App\Http\ErrorResponse;
+use Psr\Log\LoggerInterface;
 use App\Http\Actions\CreateLike;
 use App\Http\Actions\CreateUser;
 use App\Http\Actions\DeleteLike;
@@ -16,7 +17,8 @@ use App\Http\Actions\FindArticleById;
 use App\Http\Actions\FindCommentById;
 
 $container = require __DIR__ . '/bootstrap.php';
-require_once __DIR__ . '/vendor/autoload.php';
+
+$logger = $container->get(LoggerInterface::class);
 
 $request = new Request(
     $_GET,
@@ -26,14 +28,16 @@ $request = new Request(
 
 try {
     $path = $request->path();
-} catch (HttpException) {
+} catch (HttpException $e) {
+    $logger->warning($e->getMessage());
     (new ErrorResponse)->send();
     return;
 }
 
 try {
     $method = $request->method();
-} catch (HttpException) {
+} catch (HttpException $e) {
+    $logger->warning($e->getMessage());
     (new ErrorResponse)->send();
     return;
 }
@@ -58,22 +62,25 @@ $routes = [
     ],
 ];
 
-if (!array_key_exists($method, $routes)) {
-    (new ErrorResponse('Not found'))->send();
-    return;
-}
+if (
+    !array_key_exists($method, $routes)
+    || !array_key_exists($path, $routes[$method])
+) {
+    $logger->info(sprintf('Клиент с IP-адресом :%s пытался получить несуществующий роут', $_SERVER['REMOTE_ADDR']));
 
-if (!array_key_exists($path, $routes[$method])) {
-    (new ErrorResponse('Not found'))->send();
+    $message = "Route not found: $method $path";
+    $logger->notice($message);
+    (new ErrorResponse($message))->send();
     return;
 }
 
 $actionClassName = $routes[$method][$path];
-$action = $container->get($actionClassName);
 
 try {
+    $action = $container->get($actionClassName);
     $response = $action->handle($request);
 } catch (Exception $e) {
+    $logger->error($e->getMessage(), ['exception' => $e]);
     (new ErrorResponse($e->getMessage()))->send();
 }
 

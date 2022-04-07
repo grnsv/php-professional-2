@@ -6,12 +6,15 @@ use PDOStatement;
 use Faker\Factory;
 use Faker\Generator;
 use App\Drivers\Connection;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Repositories\UserRepository;
 use App\Exceptions\UserNotFoundException;
 
 class UserRepositoryTest extends TestCase
 {
+    use LoggerTrait;
+
     private Generator $faker;
 
     public function __construct(
@@ -40,7 +43,7 @@ class UserRepositoryTest extends TestCase
         /**
          * @var Connection $connectionStub
          */
-        $repository = new UserRepository($connectionStub);
+        $repository = new UserRepository($connectionStub, $this->getLogger());
 
         $this->expectException(UserNotFoundException::class);
         $this->expectExceptionMessage('User not found');
@@ -65,7 +68,7 @@ class UserRepositoryTest extends TestCase
         /**
          * @var Connection $connectionStub
          */
-        $repository = new UserRepository($connectionStub);
+        $repository = new UserRepository($connectionStub, $this->getLogger());
 
         $this->expectException(UserNotFoundException::class);
         $this->expectExceptionMessage('User not found');

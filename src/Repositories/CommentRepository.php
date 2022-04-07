@@ -4,8 +4,10 @@ namespace App\Repositories;
 
 use PDO;
 use PDOStatement;
+use App\Drivers\Connection;
 use App\Entities\User\User;
 use App\Commands\GetCommand;
+use Psr\Log\LoggerInterface;
 use App\Entities\Article\Article;
 use App\Entities\Comment\Comment;
 use App\Factories\EntityManagerFactory;
@@ -13,6 +15,13 @@ use App\Exceptions\CommentNotFoundException;
 
 class CommentRepository extends EntityRepository implements CommentRepositoryInterface
 {
+    public function __construct(
+        Connection $connection,
+        private LoggerInterface $logger,
+    ) {
+        parent::__construct($connection);
+    }
+
     /**
      * @throws CommentNotFoundException
      */
@@ -37,6 +46,7 @@ class CommentRepository extends EntityRepository implements CommentRepositoryInt
         $result = $statement->fetch(PDO::FETCH_OBJ);
 
         if (!$result) {
+            $this->logger->error('Comment not found');
             throw new CommentNotFoundException('Comment not found');
         }
 

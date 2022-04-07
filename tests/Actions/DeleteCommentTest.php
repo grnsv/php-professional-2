@@ -1,11 +1,12 @@
 <?php
 
-namespace Tests;
+namespace Tests\Actions;
 
 use PDOStatement;
 use App\Http\Request;
 use App\Drivers\Connection;
 use App\Http\ErrorResponse;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Http\SuccessfulResponse;
 use App\Http\Actions\DeleteComment;
@@ -14,6 +15,8 @@ use App\Commands\DeleteCommentCommandHandler;
 
 class DeleteCommentTest extends TestCase
 {
+    use LoggerTrait;
+
     public function argumentsProvider(): iterable
     {
         return
@@ -36,7 +39,7 @@ class DeleteCommentTest extends TestCase
         /**
          * @var DeleteCommentCommandHandler $deleteCommentCommandHandler
          */
-        $action = new DeleteComment($deleteCommentCommandHandler);
+        $action = new DeleteComment($deleteCommentCommandHandler, $this->getLogger());
 
         $response = $action->handle($request);
 
@@ -64,7 +67,7 @@ class DeleteCommentTest extends TestCase
         /**
          * @var DeleteCommentCommandHandler $deleteCommentCommandHandler
          */
-        $action = new DeleteComment($deleteCommentCommandHandler);
+        $action = new DeleteComment($deleteCommentCommandHandler, $this->getLogger());
 
         $response = $action->handle($request);
 
@@ -105,11 +108,12 @@ class DeleteCommentTest extends TestCase
         $deleteCommentCommandHandler = new DeleteCommentCommandHandler(
             $commentRepositoryStub,
             $connectionStub,
+            $this->getLogger(),
         );
         /**
          * @var DeleteCommentCommandHandler $deleteCommentCommandHandler
          */
-        $action = new DeleteComment($deleteCommentCommandHandler);
+        $action = new DeleteComment($deleteCommentCommandHandler, $this->getLogger());
 
         $response = $action->handle($request);
 

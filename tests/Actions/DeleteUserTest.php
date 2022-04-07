@@ -1,11 +1,12 @@
 <?php
 
-namespace Tests;
+namespace Tests\Actions;
 
 use PDOStatement;
 use App\Http\Request;
 use App\Drivers\Connection;
 use App\Http\ErrorResponse;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Http\Actions\DeleteUser;
 use App\Http\SuccessfulResponse;
@@ -14,6 +15,8 @@ use App\Commands\DeleteUserCommandHandler;
 
 class DeleteUserTest extends TestCase
 {
+    use LoggerTrait;
+
     public function argumentsProvider(): iterable
     {
         return
@@ -36,7 +39,7 @@ class DeleteUserTest extends TestCase
         /**
          * @var DeleteUserCommandHandler $deleteUserCommandHandler
          */
-        $action = new DeleteUser($deleteUserCommandHandler);
+        $action = new DeleteUser($deleteUserCommandHandler, $this->getLogger());
 
         $response = $action->handle($request);
 
@@ -64,7 +67,7 @@ class DeleteUserTest extends TestCase
         /**
          * @var DeleteUserCommandHandler $deleteUserCommandHandler
          */
-        $action = new DeleteUser($deleteUserCommandHandler);
+        $action = new DeleteUser($deleteUserCommandHandler, $this->getLogger());
 
         $response = $action->handle($request);
 
@@ -105,11 +108,12 @@ class DeleteUserTest extends TestCase
         $deleteUserCommandHandler = new DeleteUserCommandHandler(
             $userRepositoryStub,
             $connectionStub,
+            $this->getLogger(),
         );
         /**
          * @var DeleteUserCommandHandler $deleteUserCommandHandler
          */
-        $action = new DeleteUser($deleteUserCommandHandler);
+        $action = new DeleteUser($deleteUserCommandHandler, $this->getLogger());
 
         $response = $action->handle($request);
 

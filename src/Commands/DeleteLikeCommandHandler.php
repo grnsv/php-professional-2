@@ -3,18 +3,17 @@
 namespace App\Commands;
 
 use App\Drivers\Connection;
+use Psr\Log\LoggerInterface;
 use App\Exceptions\LikeNotFoundException;
 use App\Repositories\LikeRepositoryInterface;
 
 class DeleteLikeCommandHandler implements CommandHandlerInterface
 {
-    private \PDOStatement|false $stmt;
-
     public function __construct(
         private LikeRepositoryInterface $likeRepository,
-        private Connection $connection
+        private Connection $connection,
+        private LoggerInterface $logger,
     ) {
-        $this->stmt = $connection->prepare($this->getSQL());
     }
 
     /**
@@ -22,14 +21,19 @@ class DeleteLikeCommandHandler implements CommandHandlerInterface
      */
     public function handle(CommandInterface $command): void
     {
+        $this->logger->info("Delete like command started");
+
         $id = $command->getId();
         if ($this->likeRepository->isExists($id)) {
-            $this->stmt->execute(
+            $this->connection->executeQuery(
+                $this->getSQL(),
                 [
                     ':id' => (string)$id
                 ]
             );
+            $this->logger->info("Like deleted id: $id");
         } else {
+            $this->logger->warning("Like not found: $id");
             throw new LikeNotFoundException('Like not found');
         }
     }

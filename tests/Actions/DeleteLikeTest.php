@@ -1,11 +1,12 @@
 <?php
 
-namespace Tests;
+namespace Tests\Actions;
 
 use PDOStatement;
 use App\Http\Request;
 use App\Drivers\Connection;
 use App\Http\ErrorResponse;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Http\Actions\DeleteLike;
 use App\Http\SuccessfulResponse;
@@ -14,6 +15,8 @@ use App\Commands\DeleteLikeCommandHandler;
 
 class DeleteLikeTest extends TestCase
 {
+    use LoggerTrait;
+
     public function argumentsProvider(): iterable
     {
         return
@@ -36,7 +39,7 @@ class DeleteLikeTest extends TestCase
         /**
          * @var DeleteLikeCommandHandler $deleteLikeCommandHandler
          */
-        $action = new DeleteLike($deleteLikeCommandHandler);
+        $action = new DeleteLike($deleteLikeCommandHandler, $this->getLogger());
 
         $response = $action->handle($request);
 
@@ -64,7 +67,7 @@ class DeleteLikeTest extends TestCase
         /**
          * @var DeleteLikeCommandHandler $deleteLikeCommandHandler
          */
-        $action = new DeleteLike($deleteLikeCommandHandler);
+        $action = new DeleteLike($deleteLikeCommandHandler, $this->getLogger());
 
         $response = $action->handle($request);
 
@@ -105,11 +108,12 @@ class DeleteLikeTest extends TestCase
         $deleteLikeCommandHandler = new DeleteLikeCommandHandler(
             $likeRepositoryStub,
             $connectionStub,
+            $this->getLogger(),
         );
         /**
          * @var DeleteLikeCommandHandler $deleteLikeCommandHandler
          */
-        $action = new DeleteLike($deleteLikeCommandHandler);
+        $action = new DeleteLike($deleteLikeCommandHandler, $this->getLogger());
 
         $response = $action->handle($request);
 

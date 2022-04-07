@@ -1,11 +1,12 @@
 <?php
 
-namespace Tests;
+namespace Tests\Actions;
 
 use Faker\Factory;
 use Faker\Generator;
 use App\Http\Request;
 use App\Http\ErrorResponse;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Http\SuccessfulResponse;
 use App\Http\Actions\CreateComment;
@@ -13,6 +14,8 @@ use App\Commands\CreateCommentCommandHandler;
 
 class CreateCommentTest extends TestCase
 {
+    use LoggerTrait;
+
     private Generator $faker;
 
     public function __construct(
@@ -84,7 +87,7 @@ class CreateCommentTest extends TestCase
         /**
          * @var CreateCommentCommandHandler $createCommentCommandHandlerStub
          */
-        $action = new CreateComment($createCommentCommandHandlerStub);
+        $action = new CreateComment($createCommentCommandHandlerStub, $this->getLogger());
 
         $response = $action->handle($request);
 
@@ -118,7 +121,7 @@ class CreateCommentTest extends TestCase
         /**
          * @var CreateCommentCommandHandler $createCommentCommandHandlerStub
          */
-        $action = new CreateComment($createCommentCommandHandlerStub);
+        $action = new CreateComment($createCommentCommandHandlerStub, $this->getLogger());
 
         $response = $action->handle($request);
 

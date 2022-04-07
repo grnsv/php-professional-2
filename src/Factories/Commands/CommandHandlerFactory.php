@@ -4,6 +4,7 @@ namespace App\Factories\Commands;
 
 use App\Entities\Like\Like;
 use App\Entities\User\User;
+use Psr\Log\LoggerInterface;
 use App\Container\DIContainer;
 use App\Entities\Article\Article;
 use App\Entities\Comment\Comment;
@@ -21,11 +22,29 @@ class CommandHandlerFactory implements CommandHandlerFactoryInterface
         /**
          * @var DIContainer $container
          */
+        $connection = $container->get(Connection::class);
+        $loggerInterface = $container->get(LoggerInterface::class);
         return match ($entityType) {
-            User::class => new CreateUserCommandHandler($container->get(UserRepository::class), $container->get(Connection::class)),
-            Article::class => new CreateArticleCommandHandler($container->get(ArticleRepository::class), $container->get(Connection::class)),
-            Comment::class => new CreateCommentCommandHandler($container->get(CommentRepository::class), $container->get(Connection::class)),
-            Like::class => new CreateLikeCommandHandler($container->get(LikeRepository::class), $container->get(Connection::class)),
+            User::class => new CreateUserCommandHandler(
+                $container->get(UserRepository::class),
+                $connection,
+                $loggerInterface,
+            ),
+            Article::class => new CreateArticleCommandHandler(
+                $container->get(ArticleRepository::class),
+                $connection,
+                $loggerInterface,
+            ),
+            Comment::class => new CreateCommentCommandHandler(
+                $container->get(CommentRepository::class),
+                $connection,
+                $loggerInterface,
+            ),
+            Like::class => new CreateLikeCommandHandler(
+                $container->get(LikeRepository::class),
+                $connection,
+                $loggerInterface,
+            ),
         };
     }
 }

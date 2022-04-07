@@ -1,9 +1,10 @@
 <?php
 
-namespace Tests;
+namespace Tests\Actions;
 
 use App\Http\Request;
 use App\Http\ErrorResponse;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Http\Actions\CreateLike;
 use App\Http\SuccessfulResponse;
@@ -11,6 +12,8 @@ use App\Commands\CreateLikeCommandHandler;
 
 class CreateLikeTest extends TestCase
 {
+    use LoggerTrait;
+
     public function argumentsProvider(): iterable
     {
         $userId = mt_rand(1, mt_getrandmax());
@@ -72,7 +75,7 @@ class CreateLikeTest extends TestCase
         /**
          * @var CreateLikeCommandHandler $createLikeCommandHandlerStub
          */
-        $action = new CreateLike($createLikeCommandHandlerStub);
+        $action = new CreateLike($createLikeCommandHandlerStub, $this->getLogger());
 
         $response = $action->handle($request);
 
@@ -105,7 +108,7 @@ class CreateLikeTest extends TestCase
         /**
          * @var CreateLikeCommandHandler $createLikeCommandHandlerStub
          */
-        $action = new CreateLike($createLikeCommandHandlerStub);
+        $action = new CreateLike($createLikeCommandHandlerStub, $this->getLogger());
 
         $response = $action->handle($request);
 

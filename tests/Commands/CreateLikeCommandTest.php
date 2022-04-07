@@ -8,6 +8,7 @@ use Faker\Generator;
 use App\Drivers\Connection;
 use App\Entities\Like\Like;
 use App\Entities\User\User;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Entities\Article\Article;
 use App\Repositories\LikeRepository;
@@ -17,6 +18,8 @@ use App\Commands\CreateLikeCommandHandler;
 
 class CreateLikeCommandTest extends TestCase
 {
+    use LoggerTrait;
+
     private Generator $faker;
 
     public function __construct(
@@ -68,14 +71,18 @@ class CreateLikeCommandTest extends TestCase
             ->expects($this->once())
             ->method('execute')
             ->with([
-                ':author_id' => $user->getId(),
+                ':user_id' => $user->getId(),
                 ':article_id' => $article->getId(),
             ]);
 
         /**
          * @var Connection $connectionStub
          */
-        $createLikeCommandHandler = new CreateLikeCommandHandler(new LikeRepository($connectionStub), $connectionStub);
+        $createLikeCommandHandler = new CreateLikeCommandHandler(
+            new LikeRepository($connectionStub, $this->getLogger()),
+            $connectionStub,
+            $this->getLogger(),
+        );
 
         $command = new CreateEntityCommand(
             new Like(

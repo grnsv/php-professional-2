@@ -2,8 +2,8 @@
 
 namespace Tests\Container;
 
+use Dotenv\Dotenv;
 use App\Drivers\Connection;
-use App\config\SqliteConfig;
 use App\Container\DIContainer;
 use PHPUnit\Framework\TestCase;
 use App\Drivers\PdoConnectionDriver;
@@ -39,6 +39,8 @@ class DIContainerTest extends TestCase
 
     public function testItResolvesClassByContract(): void
     {
+        Dotenv::createImmutable(__DIR__ . "/../../")->safeLoad();
+
         $container = $this->getDIContainer();
 
         $container->bind(
@@ -48,7 +50,7 @@ class DIContainerTest extends TestCase
 
         $container->bind(
             Connection::class,
-            PdoConnectionDriver::getInstance(SqliteConfig::DSN)
+            PdoConnectionDriver::getInstance($_SERVER['DSN_DATABASE'])
         );
 
         $object = $container->get(UserRepositoryInterface::class);

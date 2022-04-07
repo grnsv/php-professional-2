@@ -7,6 +7,7 @@ use Faker\Factory;
 use Faker\Generator;
 use App\Drivers\Connection;
 use App\Entities\User\User;
+use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Repositories\UserRepository;
 use App\Commands\CreateEntityCommand;
@@ -17,6 +18,8 @@ use App\Repositories\UserRepositoryInterface;
 
 class CreateUserCommandTest extends TestCase
 {
+    use LoggerTrait;
+
     private Generator $faker;
 
     public function __construct(
@@ -61,6 +64,7 @@ class CreateUserCommandTest extends TestCase
         $createUserCommandHandler = new CreateUserCommandHandler(
             $userRepositoryStub,
             $connectionStub,
+            $this->getLogger(),
         );
 
         $this->expectException(UserEmailExistsException::class);
@@ -111,7 +115,11 @@ class CreateUserCommandTest extends TestCase
          * @var UserRepositoryInterface $userRepositoryStub
          * @var Connection $connectionStub
          */
-        $createUserCommandHandler = new CreateUserCommandHandler($userRepositoryStub, $connectionStub);
+        $createUserCommandHandler = new CreateUserCommandHandler(
+            $userRepositoryStub,
+            $connectionStub,
+            $this->getLogger(),
+        );
 
         $command = new CreateEntityCommand(
             new User(

@@ -6,6 +6,7 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Enums\Argument;
 use App\Http\ErrorResponse;
+use Psr\Log\LoggerInterface;
 use App\Http\SuccessfulResponse;
 use App\Exceptions\HttpException;
 use App\Factories\EntityManagerFactory;
@@ -13,8 +14,10 @@ use App\Commands\CreateLikeCommandHandler;
 
 class CreateLike implements ActionInterface
 {
-    public function __construct(private CreateLikeCommandHandler $createLikeCommandHandler)
-    {
+    public function __construct(
+        private CreateLikeCommandHandler $createLikeCommandHandler,
+        private LoggerInterface $logger,
+    ) {
     }
 
     public function handle(Request $request): Response
@@ -29,8 +32,9 @@ class CreateLike implements ActionInterface
                 ]
             );
             $entityMangerFactory->getEntityManager()->create($entity);
-        } catch (HttpException $exception) {
-            return new ErrorResponse($exception->getMessage());
+        } catch (HttpException $e) {
+            $this->logger->warning($e->getMessage());
+            return new ErrorResponse($e->getMessage());
         }
 
         return new SuccessfulResponse([
