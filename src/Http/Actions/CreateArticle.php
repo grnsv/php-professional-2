@@ -8,14 +8,15 @@ use App\Enums\Argument;
 use App\Http\ErrorResponse;
 use Psr\Log\LoggerInterface;
 use App\Http\SuccessfulResponse;
-use App\Exceptions\HttpException;
 use App\Factories\EntityManagerFactory;
 use App\Commands\CreateArticleCommandHandler;
+use App\Http\Auth\TokenAuthenticationInterface;
 
 class CreateArticle implements ActionInterface
 {
     public function __construct(
         private CreateArticleCommandHandler $createArticleCommandHandler,
+        private TokenAuthenticationInterface $authentication,
         private LoggerInterface $logger,
     ) {
     }
@@ -27,20 +28,25 @@ class CreateArticle implements ActionInterface
             $entity = $entityMangerFactory->createEntity(
                 Argument::ARTICLE->value,
                 [
-                    'authorId=' . $request->jsonBodyField('authorId'),
+                    'authorId=' . $this->authentication->getUser($request)->getId(),
                     'title=' . $request->jsonBodyField('title'),
                     'text=' . $request->jsonBodyField('text'),
                 ]
             );
             $entityMangerFactory->getEntityManager()->create($entity);
-        } catch (HttpException $e) {
-            $this->logger->warning($e->getMessage());
-            return new ErrorResponse($e->getMessage());
+        } catch (\Exception $e) {
+            $message = $e->getMessage();
+            $this->logger->error($e);
+            return new ErrorResponse($message);
         }
 
-        return new SuccessfulResponse([
+        $data = [
             'authorId' => $entity->getAuthor()->getId(),
             'title' => $entity->getTitle(),
-        ]);
+            'text' => $entity->getText(),
+        ];
+
+        $this->logger->info('Created new Article', $data);
+        return new SuccessfulResponse($data);
     }
 }

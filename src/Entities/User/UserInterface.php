@@ -8,4 +8,5 @@ interface UserInterface extends EntityInterface
 {
     public function getFirstName(): string;
     public function getLastName(): string;
+    public function getEmail(): string;
 }

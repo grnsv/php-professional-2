@@ -9,7 +9,7 @@ use App\Exceptions\ArgumentException;
 class LikeDecorator extends Decorator implements DecoratorInterface
 {
     public ?int $id = null;
-    public int $authorId;
+    public int $userId;
     public int $articleId;
 
     /**
@@ -22,7 +22,7 @@ class LikeDecorator extends Decorator implements DecoratorInterface
         $articleFieldData = $this->getFieldData();
 
         $this->id = $articleFieldData->get(Like::ID->value) ?? null;
-        $this->authorId = $articleFieldData->get(Like::USER_ID->value);
+        $this->userId = $articleFieldData->get(Like::USER_ID->value);
         $this->articleId = $articleFieldData->get(Like::ARTICLE_ID->value);
     }
 

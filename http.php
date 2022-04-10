@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Request;
+use App\Http\Actions\LogIn;
 use App\Http\ErrorResponse;
 use Psr\Log\LoggerInterface;
 use App\Http\Actions\CreateLike;
@@ -53,6 +54,7 @@ $routes = [
         '/article/create' => CreateArticle::class,
         '/comment/create' => CreateComment::class,
         '/like/create'    => CreateLike::class,
+        '/login'          => LogIn::class,
     ],
     'DELETE' => [
         '/user'    => DeleteUser::class,

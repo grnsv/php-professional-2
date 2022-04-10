@@ -15,6 +15,8 @@ use App\Commands\CreateEntityCommand;
 use App\Repositories\CommentRepository;
 use App\Exceptions\CommentNotFoundException;
 use App\Commands\CreateCommentCommandHandler;
+use App\Repositories\UserRepositoryInterface;
+use App\Repositories\ArticleRepositoryInterface;
 
 class CreateCommentCommandTest extends TestCase
 {
@@ -36,7 +38,8 @@ class CreateCommentCommandTest extends TestCase
         $user = new User(
             $this->faker->userName(),
             $this->faker->word(),
-            $this->faker->email()
+            $this->faker->email(),
+            $this->faker->password(),
         );
         $user->setId(mt_rand(1, mt_getrandmax()));
         $article = new Article(
@@ -80,7 +83,12 @@ class CreateCommentCommandTest extends TestCase
          * @var Connection $connectionStub
          */
         $createCommentCommandHandler = new CreateCommentCommandHandler(
-            new CommentRepository($connectionStub, $this->getLogger()),
+            new CommentRepository(
+                $connectionStub,
+                $this->createStub(UserRepositoryInterface::class),
+                $this->createStub(ArticleRepositoryInterface::class),
+                $this->getLogger(),
+            ),
             $connectionStub,
             $this->getLogger(),
         );

@@ -12,6 +12,8 @@ use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Entities\Article\Article;
 use App\Repositories\LikeRepository;
+use App\Repositories\UserRepository;
+use App\Repositories\ArticleRepository;
 use App\Exceptions\LikeNotFoundException;
 
 class LikeRepositoryTest extends TestCase
@@ -34,7 +36,8 @@ class LikeRepositoryTest extends TestCase
         $user = new User(
             $this->faker->userName(),
             $this->faker->word(),
-            $this->faker->email()
+            $this->faker->email(),
+            $this->faker->password(),
         );
         $user->setId(mt_rand(1, mt_getrandmax()));
         $article = new Article(
@@ -51,7 +54,8 @@ class LikeRepositoryTest extends TestCase
             $user = new User(
                 $this->faker->userName(),
                 $this->faker->word(),
-                $this->faker->email()
+                $this->faker->email(),
+                $this->faker->password(),
             );
             $user->setId(mt_rand(1, mt_getrandmax()));
 
@@ -84,7 +88,12 @@ class LikeRepositoryTest extends TestCase
         /**
          * @var Connection $connectionStub
          */
-        $repository = new LikeRepository($connectionStub, $this->getLogger());
+        $repository = new LikeRepository(
+            $connectionStub,
+            $this->createStub(UserRepository::class),
+            $this->createStub(ArticleRepository::class),
+            $this->getLogger(),
+        );
 
         $this->expectException(LikeNotFoundException::class);
         $this->expectExceptionMessage('Like not found');
@@ -112,7 +121,12 @@ class LikeRepositoryTest extends TestCase
         /**
          * @var Connection $connectionStub
          */
-        $repository = new LikeRepository($connectionStub, $this->getLogger());
+        $repository = new LikeRepository(
+            $connectionStub,
+            $this->createStub(UserRepository::class),
+            $this->createStub(ArticleRepository::class),
+            $this->getLogger(),
+        );
         $likes = $repository->getByArticleId($articleId);
 
         $this->assertEquals($expectedValue, $likes);

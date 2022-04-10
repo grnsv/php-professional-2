@@ -33,7 +33,7 @@ class FindByEmailTest extends TestCase
     {
         return
             [
-                [$this->faker->email(), $this->faker->userName(), $this->faker->word()],
+                [$this->faker->email(), $this->faker->userName(), $this->faker->word(), $this->faker->password()],
             ];
     }
 
@@ -82,7 +82,7 @@ class FindByEmailTest extends TestCase
      * @preserveGlobalState disabled
      * @dataProvider argumentsProvider
      */
-    public function testItReturnsSuccessfulResponse($email, $firstName, $lastName): void
+    public function testItReturnsSuccessfulResponse($email, $firstName, $lastName, $password): void
     {
         $request = new Request(['email' => $email], [], '');
 
@@ -90,7 +90,8 @@ class FindByEmailTest extends TestCase
             new User(
                 $firstName,
                 $lastName,
-                $email
+                $email,
+                $password,
             ),
         ]);
 

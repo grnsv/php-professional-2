@@ -31,7 +31,12 @@ class CreateUserTest extends TestCase
     {
         return
             [
-                [$this->faker->userName(), $this->faker->word(), $this->faker->email()],
+                [
+                    $this->faker->userName(),
+                    $this->faker->word(),
+                    $this->faker->email(),
+                    $this->faker->word(), //password() - doesn't work with json
+                ],
             ];
     }
 
@@ -40,16 +45,17 @@ class CreateUserTest extends TestCase
      * @preserveGlobalState disabled
      * @dataProvider argumentsProvider
      */
-    public function testItReturnsSuccessfulResponse($firstName, $lastName, $email): void
+    public function testItReturnsSuccessfulResponse($firstName, $lastName, $email, $password): void
     {
         $request = new Request(
             [],
             [],
             sprintf(
-                '{"email":"%s","firstName":"%s","lastName":"%s"}',
+                '{"email":"%s","firstName":"%s","lastName":"%s", "password":"%s"}',
                 $email,
                 $firstName,
                 $lastName,
+                $password,
             )
         );
 
@@ -65,7 +71,9 @@ class CreateUserTest extends TestCase
         $this->assertInstanceOf(SuccessfulResponse::class, $response);
         $this->expectOutputString(
             sprintf(
-                '{"success":true,"data":{"email":"%s"}}',
+                '{"success":true,"data":{"firstName":"%s","lastName":"%s","email":"%s"}}',
+                $firstName,
+                $lastName,
                 $email,
             )
         );

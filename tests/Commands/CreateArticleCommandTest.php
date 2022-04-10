@@ -14,6 +14,7 @@ use App\Commands\CreateEntityCommand;
 use App\Repositories\ArticleRepository;
 use App\Exceptions\ArticleNotFoundException;
 use App\Commands\CreateArticleCommandHandler;
+use App\Repositories\UserRepositoryInterface;
 
 class CreateArticleCommandTest extends TestCase
 {
@@ -35,7 +36,8 @@ class CreateArticleCommandTest extends TestCase
         $user = new User(
             $this->faker->userName(),
             $this->faker->word(),
-            $this->faker->email()
+            $this->faker->email(),
+            $this->faker->password(),
         );
         $user->setId(mt_rand(1, mt_getrandmax()));
         return
@@ -73,7 +75,11 @@ class CreateArticleCommandTest extends TestCase
          * @var Connection $connectionStub
          */
         $createArticleCommandHandler = new CreateArticleCommandHandler(
-            new ArticleRepository($connectionStub, $this->getLogger()),
+            new ArticleRepository(
+                $connectionStub,
+                $this->createStub(UserRepositoryInterface::class),
+                $this->getLogger(),
+            ),
             $connectionStub,
             $this->getLogger(),
         );

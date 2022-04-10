@@ -6,6 +6,8 @@ use PDOStatement;
 use App\Drivers\Connection;
 use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
+use App\Repositories\UserRepository;
+use App\Repositories\ArticleRepository;
 use App\Repositories\CommentRepository;
 use App\Exceptions\CommentNotFoundException;
 
@@ -30,7 +32,12 @@ class CommentRepositoryTest extends TestCase
         /**
          * @var Connection $connectionStub
          */
-        $repository = new CommentRepository($connectionStub, $this->getLogger());
+        $repository = new CommentRepository(
+            $connectionStub,
+            $this->createStub(UserRepository::class),
+            $this->createStub(ArticleRepository::class),
+            $this->getLogger(),
+        );
 
         $this->expectException(CommentNotFoundException::class);
         $this->expectExceptionMessage('Comment not found');

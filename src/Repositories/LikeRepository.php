@@ -6,17 +6,15 @@ use PDO;
 use PDOStatement;
 use App\Drivers\Connection;
 use App\Entities\Like\Like;
-use App\Entities\User\User;
-use App\Commands\GetCommand;
 use Psr\Log\LoggerInterface;
-use App\Entities\Article\Article;
-use App\Factories\EntityManagerFactory;
 use App\Exceptions\LikeNotFoundException;
 
 class LikeRepository extends EntityRepository implements LikeRepositoryInterface
 {
     public function __construct(
         Connection $connection,
+        private UserRepositoryInterface $userRepository,
+        private ArticleRepositoryInterface $articleRepository,
         private LoggerInterface $logger,
     ) {
         parent::__construct($connection);
@@ -50,15 +48,11 @@ class LikeRepository extends EntityRepository implements LikeRepositoryInterface
             throw new LikeNotFoundException('Like not found');
         }
 
-        /**
-         * @var EntityManagerFactoryInterface $entityMangerFactory
-         */
-        $entityMangerFactory = EntityManagerFactory::getInstance();
-        $command = new GetCommand($entityMangerFactory->getRepository(User::class));
-        $author = $command->handle($result->author_id);
-        $command = new GetCommand($entityMangerFactory->getRepository(Article::class));
-        $article = $command->handle($result->article_id);
-        $like = new Like($author, $article);
+        $like =  new Like(
+            user: $this->userRepository->get($result->user_id),
+            article: $this->articleRepository->get($result->article_id),
+        );
+
         $like->setId($result->id);
         return $like;
     }

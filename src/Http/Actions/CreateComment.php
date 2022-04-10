@@ -8,14 +8,15 @@ use App\Enums\Argument;
 use App\Http\ErrorResponse;
 use Psr\Log\LoggerInterface;
 use App\Http\SuccessfulResponse;
-use App\Exceptions\HttpException;
 use App\Factories\EntityManagerFactory;
 use App\Commands\CreateCommentCommandHandler;
+use App\Http\Auth\TokenAuthenticationInterface;
 
 class CreateComment implements ActionInterface
 {
     public function __construct(
         private CreateCommentCommandHandler $createCommentCommandHandler,
+        private TokenAuthenticationInterface $authentication,
         private LoggerInterface $logger,
     ) {
     }
@@ -27,20 +28,25 @@ class CreateComment implements ActionInterface
             $entity = $entityMangerFactory->createEntity(
                 Argument::COMMENT->value,
                 [
-                    'authorId=' . $request->jsonBodyField('authorId'),
+                    'authorId=' . $this->authentication->getUser($request)->getId(),
                     'articleId=' . $request->jsonBodyField('articleId'),
                     'text=' . $request->jsonBodyField('text'),
                 ]
             );
             $entityMangerFactory->getEntityManager()->create($entity);
-        } catch (HttpException $e) {
-            $this->logger->warning($e->getMessage());
-            return new ErrorResponse($e->getMessage());
+        } catch (\Exception $e) {
+            $message = $e->getMessage();
+            $this->logger->error($e);
+            return new ErrorResponse($message);
         }
 
-        return new SuccessfulResponse([
+        $data = [
             'authorId' => $entity->getAuthor()->getId(),
             'articleId' => $entity->getArticle()->getId(),
-        ]);
+            'text' => $entity->getText(),
+        ];
+
+        $this->logger->info('Created new Comment', $data);
+        return new SuccessfulResponse($data);
     }
 }

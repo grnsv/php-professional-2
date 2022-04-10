@@ -15,6 +15,8 @@ use App\Repositories\LikeRepository;
 use App\Commands\CreateEntityCommand;
 use App\Exceptions\LikeNotFoundException;
 use App\Commands\CreateLikeCommandHandler;
+use App\Repositories\UserRepositoryInterface;
+use App\Repositories\ArticleRepositoryInterface;
 
 class CreateLikeCommandTest extends TestCase
 {
@@ -36,7 +38,8 @@ class CreateLikeCommandTest extends TestCase
         $user = new User(
             $this->faker->userName(),
             $this->faker->word(),
-            $this->faker->email()
+            $this->faker->email(),
+            $this->faker->password(),
         );
         $user->setId(mt_rand(1, mt_getrandmax()));
         $article = new Article(
@@ -47,7 +50,7 @@ class CreateLikeCommandTest extends TestCase
         $article->setId(mt_rand(1, mt_getrandmax()));
         return
             [
-                [$user, $article],
+                [$user, $article, (string)mt_rand(1, mt_getrandmax())],
             ];
     }
 
@@ -79,7 +82,12 @@ class CreateLikeCommandTest extends TestCase
          * @var Connection $connectionStub
          */
         $createLikeCommandHandler = new CreateLikeCommandHandler(
-            new LikeRepository($connectionStub, $this->getLogger()),
+            new LikeRepository(
+                $connectionStub,
+                $this->createStub(UserRepositoryInterface::class),
+                $this->createStub(ArticleRepositoryInterface::class),
+                $this->getLogger(),
+            ),
             $connectionStub,
             $this->getLogger(),
         );

@@ -8,14 +8,15 @@ use App\Enums\Argument;
 use App\Http\ErrorResponse;
 use Psr\Log\LoggerInterface;
 use App\Http\SuccessfulResponse;
-use App\Exceptions\HttpException;
 use App\Factories\EntityManagerFactory;
 use App\Commands\CreateLikeCommandHandler;
+use App\Http\Auth\TokenAuthenticationInterface;
 
 class CreateLike implements ActionInterface
 {
     public function __construct(
         private CreateLikeCommandHandler $createLikeCommandHandler,
+        private TokenAuthenticationInterface $authentication,
         private LoggerInterface $logger,
     ) {
     }
@@ -27,19 +28,23 @@ class CreateLike implements ActionInterface
             $entity = $entityMangerFactory->createEntity(
                 Argument::LIKE->value,
                 [
-                    'userId=' . $request->jsonBodyField('userId'),
+                    'userId=' . $this->authentication->getUser($request)->getId(),
                     'articleId=' . $request->jsonBodyField('articleId'),
                 ]
             );
             $entityMangerFactory->getEntityManager()->create($entity);
-        } catch (HttpException $e) {
-            $this->logger->warning($e->getMessage());
-            return new ErrorResponse($e->getMessage());
+        } catch (\Exception $e) {
+            $message = $e->getMessage();
+            $this->logger->error($e);
+            return new ErrorResponse($message);
         }
 
-        return new SuccessfulResponse([
+        $data = [
             'userId' => $entity->getUser()->getId(),
             'articleId' => $entity->getArticle()->getId(),
-        ]);
+        ];
+
+        $this->logger->info('Created new Like', $data);
+        return new SuccessfulResponse($data);
     }
 }

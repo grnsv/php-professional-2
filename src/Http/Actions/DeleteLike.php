@@ -26,8 +26,9 @@ class DeleteLike implements ActionInterface
             $id = $request->query('id');
             $this->deleteLikeCommandHandler->handle(new DeleteEntityCommand($id));
         } catch (HttpException | LikeNotFoundException $e) {
-            $this->logger->warning($e->getMessage());
-            return new ErrorResponse($e->getMessage());
+            $message = $e->getMessage();
+            $this->logger->error($e);
+            return new ErrorResponse($message);
         }
 
         return new SuccessfulResponse([

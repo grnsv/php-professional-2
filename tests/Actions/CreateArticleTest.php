@@ -2,15 +2,22 @@
 
 namespace Tests\Actions;
 
+use PDOStatement;
 use Faker\Factory;
 use Faker\Generator;
 use App\Http\Request;
+use App\Drivers\Connection;
+use App\Entities\User\User;
 use App\Http\ErrorResponse;
 use Tests\Traits\LoggerTrait;
+use App\Container\DIContainer;
 use PHPUnit\Framework\TestCase;
 use App\Http\SuccessfulResponse;
 use App\Http\Actions\CreateArticle;
+use App\Repositories\UserRepository;
 use App\Commands\CreateArticleCommandHandler;
+use App\Repositories\UserRepositoryInterface;
+use App\Http\Auth\TokenAuthenticationInterface;
 
 class CreateArticleTest extends TestCase
 {
@@ -35,44 +42,91 @@ class CreateArticleTest extends TestCase
             ];
     }
 
-    // /**
-    //  * @runInSeparateProcess
-    //  * @preserveGlobalState disabled
-    //  * @dataProvider argumentsProvider
-    //  */
-    // public function testItReturnsSuccessfulResponse($authorId, $title, $text): void
-    // {
-    //     $request = new Request(
-    //         [],
-    //         [],
-    //         sprintf(
-    //             '{"authorId":"%d","title":"%s","text":"%s"}',
-    //             $authorId,
-    //             $title,
-    //             $text,
-    //         )
-    //     );
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     * @dataProvider argumentsProvider
+     */
+    public function testItReturnsSuccessfulResponse($authorId, $title, $text): void
+    {
+        $request = new Request(
+            [],
+            [],
+            sprintf(
+                '{"authorId":"%d","title":"%s","text":"%s"}',
+                $authorId,
+                $title,
+                $text,
+            )
+        );
 
-    //     $createArticleCommandHandlerStub = $this->createStub(CreateArticleCommandHandler::class);
+        $author = new User(
+            $this->faker->userName(),
+            $this->faker->word(),
+            $this->faker->email(),
+            $this->faker->password(),
+        );
+        $author->setId($authorId);
 
-    //     /**
-    //      * @var CreateArticleCommandHandler $createArticleCommandHandlerStub
-    //      */
-    //     $action = new CreateArticle($createArticleCommandHandlerStub);
+        $createArticleCommandHandlerStub = $this->createStub(CreateArticleCommandHandler::class);
+        $tokenAuthenticationInterface = $this->createStub(TokenAuthenticationInterface::class);
 
-    //     $response = $action->handle($request);
+        $action = new CreateArticle(
+            $createArticleCommandHandlerStub,
+            $tokenAuthenticationInterface,
+            $this->getLogger(),
+        );
 
-    //     $this->assertInstanceOf(SuccessfulResponse::class, $response);
-    //     $this->expectOutputString(
-    //         sprintf(
-    //             '{"success":true,"data":{"authorId":"%d","title":"%s"}}',
-    //             $authorId,
-    //             $title,
-    //         )
-    //     );
+        /**
+         * @var Stub $tokenAuthenticationInterface
+         */
+        $tokenAuthenticationInterface->method('getUser')->willReturn($author);
 
-    //     $response->send();
-    // }
+        $userRepositoryStub = $this->createStub(UserRepository::class);
+        $connectionStub = $this->createStub(Connection::class);
+        $statementStub = $this->createStub(PDOStatement::class);
+
+        /**
+         * @var DIContainer @container
+         */
+        $container = $this->getContainer();
+        $container->bind(
+            UserRepositoryInterface::class,
+            $userRepositoryStub
+        );
+        $container->bind(
+            UserRepository::class,
+            $userRepositoryStub
+        );
+        $container->bind(
+            Connection::class,
+            $connectionStub
+        );
+
+        /**
+         * @var Stub $userRepositoryStub
+         */
+        $userRepositoryStub->method('get')->willReturn($author);
+
+        /**
+         * @var Stub $connectionStub
+         */
+        $connectionStub->method('prepare')->willReturn($statementStub);
+
+        $response = $action->handle($request);
+
+        $this->assertInstanceOf(SuccessfulResponse::class, $response);
+        $this->expectOutputString(
+            sprintf(
+                '{"success":true,"data":{"authorId":%d,"title":"%s","text":"%s"}}',
+                $authorId,
+                $title,
+                $text,
+            )
+        );
+
+        $response->send();
+    }
 
     /**
      * @runInSeparateProcess
@@ -87,7 +141,11 @@ class CreateArticleTest extends TestCase
         /**
          * @var CreateArticleCommandHandler $createArticleCommandHandlerStub
          */
-        $action = new CreateArticle($createArticleCommandHandlerStub, $this->getLogger());
+        $action = new CreateArticle(
+            $createArticleCommandHandlerStub,
+            $this->createStub(TokenAuthenticationInterface::class),
+            $this->getLogger(),
+        );
 
         $response = $action->handle($request);
 
@@ -121,7 +179,11 @@ class CreateArticleTest extends TestCase
         /**
          * @var CreateArticleCommandHandler $createArticleCommandHandlerStub
          */
-        $action = new CreateArticle($createArticleCommandHandlerStub, $this->getLogger());
+        $action = new CreateArticle(
+            $createArticleCommandHandlerStub,
+            $this->createStub(TokenAuthenticationInterface::class),
+            $this->getLogger(),
+        );
 
         $response = $action->handle($request);
 

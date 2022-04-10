@@ -25,8 +25,7 @@ class DeleteLikeCommandHandler implements CommandHandlerInterface
 
         $id = $command->getId();
         if ($this->likeRepository->isExists($id)) {
-            $this->connection->executeQuery(
-                $this->getSQL(),
+            $this->connection->prepare($this->getSQL())->execute(
                 [
                     ':id' => (string)$id
                 ]

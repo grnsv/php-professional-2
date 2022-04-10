@@ -8,10 +8,8 @@ use App\Entities\User\User;
 use App\Http\ErrorResponse;
 use Psr\Log\LoggerInterface;
 use App\Http\SuccessfulResponse;
-use App\Exceptions\HttpException;
 use App\Commands\CreateEntityCommand;
 use App\Commands\CreateUserCommandHandler;
-use App\Exceptions\UserEmailExistsException;
 
 class CreateUser implements ActionInterface
 {
@@ -28,16 +26,23 @@ class CreateUser implements ActionInterface
                 $request->jsonBodyField('firstName'),
                 $request->jsonBodyField('lastName'),
                 $request->jsonBodyField('email'),
+                $request->jsonBodyField('password'),
             );
 
             $this->createUserCommandHandler->handle(new CreateEntityCommand($user));
-        } catch (HttpException | UserEmailExistsException $e) {
-            $this->logger->warning($e->getMessage());
-            return new ErrorResponse($e->getMessage());
+        } catch (\Exception $e) {
+            $message = $e->getMessage();
+            $this->logger->error($e);
+            return new ErrorResponse($message);
         }
 
-        return new SuccessfulResponse([
+        $data = [
+            'firstName' => $user->getFirstName(),
+            'lastName' => $user->getLastName(),
             'email' => $user->getEmail(),
-        ]);
+        ];
+
+        $this->logger->info('Created new User', $data);
+        return new SuccessfulResponse($data);
     }
 }

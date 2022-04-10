@@ -25,8 +25,7 @@ class DeleteCommentCommandHandler implements CommandHandlerInterface
 
         $id = $command->getId();
         if ($this->commentRepository->isExists($id)) {
-            $this->connection->executeQuery(
-                $this->getSQL(),
+            $this->connection->prepare($this->getSQL())->execute(
                 [
                     ':id' => (string)$id
                 ]
