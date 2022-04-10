@@ -14,6 +14,7 @@ class User implements UserInterface
         private string $firstName,
         private string $lastName,
         private string $email,
+        private string $password,
     ) {
     }
 
@@ -30,6 +31,28 @@ class User implements UserInterface
     public function getEmail(): string
     {
         return $this->email;
+    }
+
+    public function setPassword(string $password): string
+    {
+        $this->password = self::hash($password, $this->getEmail());
+
+        return $this->password;
+    }
+
+    private static function hash(string $password, string $email): string
+    {
+        return hash('sha256', $email . $password);
+    }
+
+    public function checkPassword(string $password): bool
+    {
+        return $this->password === self::hash($password, $this->getEmail());
+    }
+
+    public function getPassword(): string
+    {
+        return $this->password;
     }
 
     public function __toString(): string

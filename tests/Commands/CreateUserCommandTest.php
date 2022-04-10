@@ -35,14 +35,14 @@ class CreateUserCommandTest extends TestCase
     {
         return
             [
-                [$this->faker->userName(), $this->faker->word(), $this->faker->email()],
+                [$this->faker->userName(), $this->faker->word(), $this->faker->email(), $this->faker->password()],
             ];
     }
 
     /**
      * @dataProvider argumentsProvider
      */
-    public function testItThrowsAnExceptionWhenUserAlreadyExists($firstName, $lastName, $email): void
+    public function testItThrowsAnExceptionWhenUserAlreadyExists($firstName, $lastName, $email, $password): void
     {
         /**
          * @var Stub $connectionStub
@@ -74,7 +74,8 @@ class CreateUserCommandTest extends TestCase
             new User(
                 $firstName,
                 $lastName,
-                $email
+                $email,
+                $password,
             )
         );
 
@@ -85,7 +86,7 @@ class CreateUserCommandTest extends TestCase
      * @throws UserNotFoundException
      * @dataProvider argumentsProvider
      */
-    public function testItSavesUserToDatabase($firstName, $lastName, $email): void
+    public function testItSavesUserToDatabase($firstName, $lastName, $email, $password): void
     {
         /**
          * @var Stub $connectionStub
@@ -109,6 +110,7 @@ class CreateUserCommandTest extends TestCase
                 ':firstName' => $firstName,
                 ':lastName' => $lastName,
                 ':email' => $email,
+                ':password' => hash('sha256', $email . $password),
             ]);
 
         /**
@@ -125,7 +127,8 @@ class CreateUserCommandTest extends TestCase
             new User(
                 $firstName,
                 $lastName,
-                $email
+                $email,
+                $password,
             )
         );
 

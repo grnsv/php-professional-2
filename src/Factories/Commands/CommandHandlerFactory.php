@@ -2,13 +2,17 @@
 
 namespace App\Factories\Commands;
 
+use App\Drivers\Connection;
 use App\Entities\Like\Like;
 use App\Entities\User\User;
 use Psr\Log\LoggerInterface;
 use App\Container\DIContainer;
 use App\Entities\Article\Article;
 use App\Entities\Comment\Comment;
+use App\Repositories\LikeRepository;
 use App\Repositories\UserRepository;
+use App\Repositories\ArticleRepository;
+use App\Repositories\CommentRepository;
 use App\Commands\CommandHandlerInterface;
 use App\Commands\CreateLikeCommandHandler;
 use App\Commands\CreateUserCommandHandler;
@@ -22,6 +26,7 @@ class CommandHandlerFactory implements CommandHandlerFactoryInterface
         /**
          * @var DIContainer $container
          */
+        $container = DIContainer::getInstance();
         $connection = $container->get(Connection::class);
         $loggerInterface = $container->get(LoggerInterface::class);
         return match ($entityType) {

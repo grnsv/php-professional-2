@@ -30,15 +30,21 @@ class CreateLikeCommandHandler implements CommandHandlerInterface
         $userId = $like->getUser()->getId();
         $articleId = $like->getArticle()->getId();
 
-        $result = $this->connection->prepare($this->getSQL())->execute(
-            [
-                ':user_id' => $userId,
-                ':article_id' => $articleId,
-            ]
-        );
-        if ($result) {
-            $this->logger->info("Like created userId: $userId articleId: $articleId");
+        try {
+            $this->connection->beginTransaction();
+            $this->connection->prepare($this->getSQL())->execute(
+                [
+                    ':user_id' => $userId,
+                    ':article_id' => $articleId,
+                ]
+            );
+
+            $this->connection->commit();
+        } catch (\PDOException $e) {
+            $this->connection->rollback();
+            print "Error!: " . $e->getMessage() . PHP_EOL;
         }
+        $this->logger->info("Like created userId: $userId articleId: $articleId");
     }
 
     public function getSQL(): string

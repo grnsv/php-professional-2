@@ -2,15 +2,24 @@
 
 namespace Tests\Actions;
 
+use PDOStatement;
 use Faker\Factory;
 use Faker\Generator;
 use App\Http\Request;
+use App\Drivers\Connection;
+use App\Entities\User\User;
 use App\Http\ErrorResponse;
 use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Http\SuccessfulResponse;
+use App\Entities\Article\Article;
 use App\Http\Actions\CreateComment;
+use App\Repositories\UserRepository;
+use App\Repositories\ArticleRepository;
 use App\Commands\CreateCommentCommandHandler;
+use App\Repositories\UserRepositoryInterface;
+use App\Http\Auth\TokenAuthenticationInterface;
+use App\Repositories\ArticleRepositoryInterface;
 
 class CreateCommentTest extends TestCase
 {
@@ -35,44 +44,112 @@ class CreateCommentTest extends TestCase
             ];
     }
 
-    // /**
-    //  * @runInSeparateProcess
-    //  * @preserveGlobalState disabled
-    //  * @dataProvider argumentsProvider
-    //  */
-    // public function testItReturnsSuccessfulResponse($authorId, $articleId, $text): void
-    // {
-    //     $request = new Request(
-    //         [],
-    //         [],
-    //         sprintf(
-    //             '{"authorId":"%d","articleId":"%d","text":"%s"}',
-    //             $authorId,
-    //             $articleId,
-    //             $text,
-    //         )
-    //     );
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     * @dataProvider argumentsProvider
+     */
+    public function testItReturnsSuccessfulResponse($authorId, $articleId, $text): void
+    {
+        $request = new Request(
+            [],
+            [],
+            sprintf(
+                '{"authorId":"%d","articleId":"%d","text":"%s"}',
+                $authorId,
+                $articleId,
+                $text,
+            )
+        );
 
-    //     $createCommentCommandHandlerStub = $this->createStub(CreateCommentCommandHandler::class);
+        $author = new User(
+            $this->faker->userName(),
+            $this->faker->word(),
+            $this->faker->email(),
+            $this->faker->password(),
+        );
+        $author->setId($authorId);
 
-    //     /**
-    //      * @var CreateCommentCommandHandler $createCommentCommandHandlerStub
-    //      */
-    //     $action = new CreateComment($createCommentCommandHandlerStub);
+        $article = new Article(
+            $author,
+            $this->faker->word(),
+            $this->faker->text(),
+        );
+        $article->setId($articleId);
 
-    //     $response = $action->handle($request);
+        $createCommentCommandHandlerStub = $this->createStub(CreateCommentCommandHandler::class);
+        $tokenAuthenticationInterface = $this->createStub(TokenAuthenticationInterface::class);
 
-    //     $this->assertInstanceOf(SuccessfulResponse::class, $response);
-    //     $this->expectOutputString(
-    //         sprintf(
-    //             '{"success":true,"data":{"authorId":"%d","articleId":"%d"}}',
-    //             $authorId,
-    //             $articleId,
-    //         )
-    //     );
+        $action = new CreateComment(
+            $createCommentCommandHandlerStub,
+            $tokenAuthenticationInterface,
+            $this->getLogger(),
+        );
 
-    //     $response->send();
-    // }
+        /**
+         * @var Stub $tokenAuthenticationInterface
+         */
+        $tokenAuthenticationInterface->method('getUser')->willReturn($author);
+
+        $userRepositoryStub = $this->createStub(UserRepository::class);
+        $articleRepositoryStub = $this->createStub(ArticleRepository::class);
+        $connectionStub = $this->createStub(Connection::class);
+        $statementStub = $this->createStub(PDOStatement::class);
+
+        /**
+         * @var DIContainer @container
+         */
+        $container = $this->getContainer();
+        $container->bind(
+            UserRepositoryInterface::class,
+            $userRepositoryStub
+        );
+        $container->bind(
+            UserRepository::class,
+            $userRepositoryStub
+        );
+        $container->bind(
+            ArticleRepositoryInterface::class,
+            $articleRepositoryStub
+        );
+        $container->bind(
+            ArticleRepository::class,
+            $articleRepositoryStub
+        );
+        $container->bind(
+            Connection::class,
+            $connectionStub
+        );
+
+        /**
+         * @var Stub $userRepositoryStub
+         */
+        $userRepositoryStub->method('get')->willReturn($author);
+
+        /**
+         * @var Stub $articleRepositoryStub
+         */
+        $articleRepositoryStub->method('get')->willReturn($article);
+
+        /**
+         * @var Stub $connectionStub
+         */
+        $connectionStub->method('prepare')->willReturn($statementStub);
+
+        $response = $action->handle($request);
+
+        $this->assertInstanceOf(SuccessfulResponse::class, $response);
+        $this->expectOutputString(
+            sprintf(
+                '{"success":true,"data":{"authorId":%d,"articleId":%d,"text":"%s"}}',
+                $authorId,
+                $articleId,
+                $text,
+            )
+        );
+
+        $response->send();
+    }
 
     /**
      * @runInSeparateProcess
@@ -87,7 +164,11 @@ class CreateCommentTest extends TestCase
         /**
          * @var CreateCommentCommandHandler $createCommentCommandHandlerStub
          */
-        $action = new CreateComment($createCommentCommandHandlerStub, $this->getLogger());
+        $action = new CreateComment(
+            $createCommentCommandHandlerStub,
+            $this->createStub(TokenAuthenticationInterface::class),
+            $this->getLogger(),
+        );
 
         $response = $action->handle($request);
 
@@ -121,7 +202,11 @@ class CreateCommentTest extends TestCase
         /**
          * @var CreateCommentCommandHandler $createCommentCommandHandlerStub
          */
-        $action = new CreateComment($createCommentCommandHandlerStub, $this->getLogger());
+        $action = new CreateComment(
+            $createCommentCommandHandlerStub,
+            $this->createStub(TokenAuthenticationInterface::class),
+            $this->getLogger(),
+        );
 
         $response = $action->handle($request);
 

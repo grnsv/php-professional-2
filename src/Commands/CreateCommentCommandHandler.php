@@ -5,6 +5,7 @@ namespace App\Commands;
 use App\Drivers\Connection;
 use Psr\Log\LoggerInterface;
 use App\Entities\Comment\Comment;
+use App\Entities\Comment\CommentInterface;
 use App\Repositories\CommentRepositoryInterface;
 
 class CreateCommentCommandHandler implements CommandHandlerInterface
@@ -30,16 +31,22 @@ class CreateCommentCommandHandler implements CommandHandlerInterface
         $authorId = $comment->getAuthor()->getId();
         $articleId = $comment->getArticle()->getId();
 
-        $result = $this->connection->prepare($this->getSQL())->execute(
-            [
-                ':author_id' => $authorId,
-                ':article_id' => $articleId,
-                ':text' => $comment->getText(),
-            ]
-        );
-        if ($result) {
-            $this->logger->info("Comment created authorId: $authorId articleId: $articleId");
+        try {
+            $this->connection->beginTransaction();
+            $this->connection->prepare($this->getSQL())->execute(
+                [
+                    ':author_id' => $authorId,
+                    ':article_id' => $articleId,
+                    ':text' => $comment->getText(),
+                ]
+            );
+
+            $this->connection->commit();
+        } catch (\PDOException $e) {
+            $this->connection->rollback();
+            print "Error!: " . $e->getMessage() . PHP_EOL;
         }
+        $this->logger->info("Comment created authorId: $authorId articleId: $articleId");
     }
 
     public function getSQL(): string

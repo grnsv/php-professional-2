@@ -26,8 +26,9 @@ class DeleteComment implements ActionInterface
             $id = $request->query('id');
             $this->deleteCommentCommandHandler->handle(new DeleteEntityCommand($id));
         } catch (HttpException | CommentNotFoundException $e) {
-            $this->logger->warning($e->getMessage());
-            return new ErrorResponse($e->getMessage());
+            $message = $e->getMessage();
+            $this->logger->error($e);
+            return new ErrorResponse($message);
         }
 
         return new SuccessfulResponse([

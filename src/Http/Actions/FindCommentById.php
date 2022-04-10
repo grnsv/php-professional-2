@@ -5,6 +5,7 @@ namespace App\Http\Actions;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\ErrorResponse;
+use Psr\Log\LoggerInterface;
 use App\Http\SuccessfulResponse;
 use App\Entities\Comment\Comment;
 use App\Exceptions\HttpException;
@@ -14,8 +15,10 @@ use App\Repositories\CommentRepositoryInterface;
 
 class FindCommentById implements ActionInterface
 {
-    public function __construct(private ?CommentRepositoryInterface $commentRepository = null)
-    {
+    public function __construct(
+        private CommentRepositoryInterface $commentRepository,
+        private LoggerInterface $logger,
+    ) {
         $this->commentRepository = $this->commentRepository ?? EntityManagerFactory::getInstance()->getRepository(Comment::class);
     }
 

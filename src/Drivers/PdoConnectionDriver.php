@@ -30,9 +30,4 @@ class PdoConnectionDriver extends \PDO implements Connection
 
         return self::$instances[$class];
     }
-
-    public function executeQuery(string $query, array $params): void
-    {
-        $this->prepare($query)->execute($params);
-    }
 }

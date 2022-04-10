@@ -5,6 +5,7 @@ namespace App\Http\Actions;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\ErrorResponse;
+use Psr\Log\LoggerInterface;
 use App\Http\SuccessfulResponse;
 use App\Entities\Article\Article;
 use App\Exceptions\HttpException;
@@ -14,8 +15,10 @@ use App\Repositories\ArticleRepositoryInterface;
 
 class FindArticleById implements ActionInterface
 {
-    public function __construct(private ?ArticleRepositoryInterface $articleRepository = null)
-    {
+    public function __construct(
+        private ArticleRepositoryInterface $articleRepository,
+        private LoggerInterface $logger,
+    ) {
         $this->articleRepository = $this->articleRepository ?? EntityManagerFactory::getInstance()->getRepository(Article::class);
     }
 

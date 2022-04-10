@@ -14,6 +14,7 @@ final class UserFactory implements UserFactoryInterface
             $userDecorator->firstName,
             $userDecorator->lastName,
             $userDecorator->email,
+            $userDecorator->password,
         );
     }
 }

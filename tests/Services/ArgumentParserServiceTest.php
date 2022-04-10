@@ -67,12 +67,14 @@ class ArgumentParserServiceTest extends TestCase
         $firstName = $this->faker->userName();
         $lastName = $this->faker->word();
         $email = $this->faker->email();
+        $password = $this->faker->word(); //password() - doesn't work with "=" divider
 
         $argument = $this->argumentParserService->parseRawInput(
             [
                 sprintf('%s=%s', User::FIRST_NAME->value, $firstName),
                 sprintf('%s=%s', User::LAST_NAME->value, $lastName),
-                sprintf('%s=%s', User::EMAIL->value, $email)
+                sprintf('%s=%s', User::EMAIL->value, $email),
+                sprintf('%s=%s', User::PASSWORD->value, $password),
             ],
             User::getRequiredFields()
         );

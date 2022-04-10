@@ -5,17 +5,15 @@ namespace App\Repositories;
 use PDO;
 use PDOStatement;
 use App\Drivers\Connection;
-use App\Entities\User\User;
-use App\Commands\GetCommand;
 use Psr\Log\LoggerInterface;
 use App\Entities\Article\Article;
-use App\Factories\EntityManagerFactory;
 use App\Exceptions\ArticleNotFoundException;
 
 class ArticleRepository extends EntityRepository implements ArticleRepositoryInterface
 {
     public function __construct(
         Connection $connection,
+        private UserRepositoryInterface $userRepository,
         private LoggerInterface $logger,
     ) {
         parent::__construct($connection);
@@ -49,13 +47,12 @@ class ArticleRepository extends EntityRepository implements ArticleRepositoryInt
             throw new ArticleNotFoundException('Article not found');
         }
 
-        /**
-         * @var EntityManagerFactoryInterface $entityMangerFactory
-         */
-        $entityMangerFactory = EntityManagerFactory::getInstance();
-        $command = new GetCommand($entityMangerFactory->getRepository(User::class));
-        $author = $command->handle($result->author_id);
-        $article = new Article($author, $result->title, $result->text);
+        $article =  new Article(
+            author: $this->userRepository->get($result->author_id),
+            title: $result->title,
+            text: $result->text,
+        );
+
         $article->setId($result->id);
         return $article;
     }

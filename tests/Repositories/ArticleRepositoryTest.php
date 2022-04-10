@@ -8,6 +8,7 @@ use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Repositories\ArticleRepository;
 use App\Exceptions\ArticleNotFoundException;
+use App\Repositories\UserRepository;
 
 class ArticleRepositoryTest extends TestCase
 {
@@ -30,7 +31,11 @@ class ArticleRepositoryTest extends TestCase
         /**
          * @var Connection $connectionStub
          */
-        $repository = new ArticleRepository($connectionStub, $this->getLogger());
+        $repository = new ArticleRepository(
+            $connectionStub,
+            $this->createStub(UserRepository::class),
+            $this->getLogger(),
+        );
 
         $this->expectException(ArticleNotFoundException::class);
         $this->expectExceptionMessage('Article not found');
