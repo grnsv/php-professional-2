@@ -2,21 +2,17 @@
 
 namespace Tests\Actions;
 
-use PDOStatement;
 use Faker\Factory;
 use Faker\Generator;
 use App\Http\Request;
-use App\Drivers\Connection;
 use App\Entities\User\User;
 use App\Http\ErrorResponse;
 use Tests\Traits\LoggerTrait;
-use App\Container\DIContainer;
 use PHPUnit\Framework\TestCase;
 use App\Http\SuccessfulResponse;
+use App\Entities\Article\Article;
 use App\Http\Actions\CreateArticle;
-use App\Repositories\UserRepository;
 use App\Commands\CreateArticleCommandHandler;
-use App\Repositories\UserRepositoryInterface;
 use App\Http\Auth\TokenAuthenticationInterface;
 
 class CreateArticleTest extends TestCase
@@ -38,7 +34,9 @@ class CreateArticleTest extends TestCase
     {
         return
             [
-                [mt_rand(1, mt_getrandmax()), $this->faker->word(), $this->faker->text()],
+                $this->getTestData(),
+                $this->getTestData(),
+                $this->getTestData(),
             ];
     }
 
@@ -47,26 +45,18 @@ class CreateArticleTest extends TestCase
      * @preserveGlobalState disabled
      * @dataProvider argumentsProvider
      */
-    public function testItReturnsSuccessfulResponse($authorId, $title, $text): void
+    public function testItReturnsSuccessfulResponse($user, $article): void
     {
         $request = new Request(
             [],
             [],
             sprintf(
                 '{"authorId":"%d","title":"%s","text":"%s"}',
-                $authorId,
-                $title,
-                $text,
+                $user->getId(),
+                $article->getTitle(),
+                $article->getText(),
             )
         );
-
-        $author = new User(
-            $this->faker->userName(),
-            $this->faker->word(),
-            $this->faker->email(),
-            $this->faker->password(),
-        );
-        $author->setId($authorId);
 
         $createArticleCommandHandlerStub = $this->createStub(CreateArticleCommandHandler::class);
         $tokenAuthenticationInterface = $this->createStub(TokenAuthenticationInterface::class);
@@ -80,48 +70,23 @@ class CreateArticleTest extends TestCase
         /**
          * @var Stub $tokenAuthenticationInterface
          */
-        $tokenAuthenticationInterface->method('getUser')->willReturn($author);
-
-        $userRepositoryStub = $this->createStub(UserRepository::class);
-        $connectionStub = $this->createStub(Connection::class);
-        $statementStub = $this->createStub(PDOStatement::class);
+        $tokenAuthenticationInterface->method('getUser')->willReturn($user);
 
         /**
-         * @var DIContainer @container
+         * @var Stub $createArticleCommandHandlerStub
          */
-        $container = $this->getContainer();
-        $container->bind(
-            UserRepositoryInterface::class,
-            $userRepositoryStub
-        );
-        $container->bind(
-            UserRepository::class,
-            $userRepositoryStub
-        );
-        $container->bind(
-            Connection::class,
-            $connectionStub
-        );
-
-        /**
-         * @var Stub $userRepositoryStub
-         */
-        $userRepositoryStub->method('get')->willReturn($author);
-
-        /**
-         * @var Stub $connectionStub
-         */
-        $connectionStub->method('prepare')->willReturn($statementStub);
+        $createArticleCommandHandlerStub->method('handle')->willReturn($article);
 
         $response = $action->handle($request);
 
         $this->assertInstanceOf(SuccessfulResponse::class, $response);
         $this->expectOutputString(
             sprintf(
-                '{"success":true,"data":{"authorId":%d,"title":"%s","text":"%s"}}',
-                $authorId,
-                $title,
-                $text,
+                '{"success":true,"data":{"id":%d,"authorId":%d,"title":"%s","text":"%s"}}',
+                $article->getId(),
+                $user->getId(),
+                $article->getTitle(),
+                $article->getText(),
             )
         );
 
@@ -136,13 +101,8 @@ class CreateArticleTest extends TestCase
     {
         $request = new Request([], [], '');
 
-        $createArticleCommandHandlerStub = $this->createStub(CreateArticleCommandHandler::class);
-
-        /**
-         * @var CreateArticleCommandHandler $createArticleCommandHandlerStub
-         */
         $action = new CreateArticle(
-            $createArticleCommandHandlerStub,
+            $this->createStub(CreateArticleCommandHandler::class),
             $this->createStub(TokenAuthenticationInterface::class),
             $this->getLogger(),
         );
@@ -162,25 +122,20 @@ class CreateArticleTest extends TestCase
      * @preserveGlobalState disabled
      * @dataProvider argumentsProvider
      */
-    public function testItReturnsErrorResponseIfNoTextProvided($authorId, $title): void
+    public function testItReturnsErrorResponseIfNoTextProvided($user, $article): void
     {
         $request = new Request(
             [],
             [],
             sprintf(
                 '{"authorId":"%d","title":"%s","text":""}',
-                $authorId,
-                $title,
+                $user->getId(),
+                $article->getTitle(),
             )
         );
 
-        $createArticleCommandHandlerStub = $this->createStub(CreateArticleCommandHandler::class);
-
-        /**
-         * @var CreateArticleCommandHandler $createArticleCommandHandlerStub
-         */
         $action = new CreateArticle(
-            $createArticleCommandHandlerStub,
+            $this->createStub(CreateArticleCommandHandler::class),
             $this->createStub(TokenAuthenticationInterface::class),
             $this->getLogger(),
         );
@@ -193,5 +148,25 @@ class CreateArticleTest extends TestCase
         );
 
         $response->send();
+    }
+
+    private function getTestData(): array
+    {
+        $user = new User(
+            $this->faker->firstName(),
+            $this->faker->lastName(),
+            $this->faker->email(),
+            $this->faker->password(),
+        );
+        $user->setId(mt_rand(1, mt_getrandmax()));
+
+        $article = new Article(
+            $user,
+            $this->faker->title(),
+            $this->faker->text(),
+        );
+        $article->setId(mt_rand(1, mt_getrandmax()));
+
+        return [$user, $article];
     }
 }

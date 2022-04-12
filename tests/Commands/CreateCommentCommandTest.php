@@ -8,15 +8,13 @@ use Faker\Generator;
 use App\Drivers\Connection;
 use App\Entities\User\User;
 use Tests\Traits\LoggerTrait;
+use App\Commands\EntityCommand;
 use PHPUnit\Framework\TestCase;
 use App\Entities\Article\Article;
 use App\Entities\Comment\Comment;
-use App\Commands\CreateEntityCommand;
 use App\Repositories\CommentRepository;
 use App\Exceptions\CommentNotFoundException;
 use App\Commands\CreateCommentCommandHandler;
-use App\Repositories\UserRepositoryInterface;
-use App\Repositories\ArticleRepositoryInterface;
 
 class CreateCommentCommandTest extends TestCase
 {
@@ -35,22 +33,11 @@ class CreateCommentCommandTest extends TestCase
 
     public function argumentsProvider(): iterable
     {
-        $user = new User(
-            $this->faker->userName(),
-            $this->faker->word(),
-            $this->faker->email(),
-            $this->faker->password(),
-        );
-        $user->setId(mt_rand(1, mt_getrandmax()));
-        $article = new Article(
-            $user,
-            $this->faker->word(),
-            $this->faker->text()
-        );
-        $article->setId(mt_rand(1, mt_getrandmax()));
         return
             [
-                [$user, $article, $this->faker->text()],
+                $this->getTestData(),
+                $this->getTestData(),
+                $this->getTestData(),
             ];
     }
 
@@ -58,49 +45,64 @@ class CreateCommentCommandTest extends TestCase
      * @throws CommentNotFoundException
      * @dataProvider argumentsProvider
      */
-    public function testItSavesCommentToDatabase($author, $article, $text): void
+    public function testItSavesCommentToDatabase($user, $article, $comment): void
     {
-        /**
-         * @var Stub $connectionStub
-         */
+        $commentRepositoryStub = $this->createStub(CommentRepository::class);
         $connectionStub = $this->createStub(Connection::class);
-        /**
-         * @var MockObject $statementMock
-         */
         $statementMock = $this->createMock(PDOStatement::class);
 
-        $connectionStub->method('prepare')->willReturn($statementMock);
-        $statementMock
-            ->expects($this->once())
-            ->method('execute')
-            ->with([
-                ':author_id' => $author->getId(),
-                ':article_id' => $article->getId(),
-                ':text' => $text,
-            ]);
-
-        /**
-         * @var Connection $connectionStub
-         */
         $createCommentCommandHandler = new CreateCommentCommandHandler(
-            new CommentRepository(
-                $connectionStub,
-                $this->createStub(UserRepositoryInterface::class),
-                $this->createStub(ArticleRepositoryInterface::class),
-                $this->getLogger(),
-            ),
+            $commentRepositoryStub,
             $connectionStub,
             $this->getLogger(),
         );
 
-        $command = new CreateEntityCommand(
-            new Comment(
-                $author,
-                $article,
-                $text
-            )
-        );
+        /**
+         * @var Stub $connectionStub
+         */
+        $connectionStub->method('prepare')->willReturn($statementMock);
+
+        /**
+         * @var MockObject $statementMock
+         */
+        $statementMock
+            ->expects($this->once())
+            ->method('execute')
+            ->with([
+                ':author_id' => $user->getId(),
+                ':article_id' => $article->getId(),
+                ':text' => $comment->getText(),
+            ]);
+
+        $command = new EntityCommand($comment);
 
         $createCommentCommandHandler->handle($command);
+    }
+
+    private function getTestData(): array
+    {
+        $user = new User(
+            $this->faker->firstName(),
+            $this->faker->lastName(),
+            $this->faker->email(),
+            $this->faker->password(),
+        );
+        $user->setId(mt_rand(1, mt_getrandmax()));
+
+        $article = new Article(
+            $user,
+            $this->faker->title(),
+            $this->faker->text(),
+        );
+        $article->setId(mt_rand(1, mt_getrandmax()));
+
+        $comment = new Comment(
+            $user,
+            $article,
+            $this->faker->text(),
+        );
+        $comment->setId(mt_rand(1, mt_getrandmax()));
+
+        return [$user, $article, $comment];
     }
 }

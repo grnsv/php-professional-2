@@ -18,9 +18,9 @@ class CreateCommentCommandHandler implements CommandHandlerInterface
     }
 
     /**
-     * @param CreateEntityCommand $command
+     * @param EntityCommand $command
      */
-    public function handle(CommandInterface $command): void
+    public function handle(CommandInterface $command): CommentInterface
     {
         $this->logger->info("Create comment command started");
 
@@ -28,15 +28,13 @@ class CreateCommentCommandHandler implements CommandHandlerInterface
          * @var Comment $comment
          */
         $comment = $command->getEntity();
-        $authorId = $comment->getAuthor()->getId();
-        $articleId = $comment->getArticle()->getId();
 
         try {
             $this->connection->beginTransaction();
             $this->connection->prepare($this->getSQL())->execute(
                 [
-                    ':author_id' => $authorId,
-                    ':article_id' => $articleId,
+                    ':author_id' => $comment->getAuthor()->getId(),
+                    ':article_id' => $comment->getArticle()->getId(),
                     ':text' => $comment->getText(),
                 ]
             );
@@ -46,7 +44,17 @@ class CreateCommentCommandHandler implements CommandHandlerInterface
             $this->connection->rollback();
             print "Error!: " . $e->getMessage() . PHP_EOL;
         }
-        $this->logger->info("Comment created authorId: $authorId articleId: $articleId");
+
+        $data = [
+            'id' => $comment->getId(),
+            'authorId' => $comment->getAuthor()->getId(),
+            'articleId' => $comment->getArticle()->getId(),
+            'text' => $comment->getText(),
+        ];
+
+        $this->logger->info('Created new Comment', $data);
+
+        return $comment->getId() ? $comment : $this->commentRepository->findById($this->connection->lastInsertId());
     }
 
     public function getSQL(): string

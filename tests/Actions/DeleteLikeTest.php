@@ -2,15 +2,14 @@
 
 namespace Tests\Actions;
 
-use PDOStatement;
 use App\Http\Request;
-use App\Drivers\Connection;
 use App\Http\ErrorResponse;
 use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Http\Actions\DeleteLike;
 use App\Http\SuccessfulResponse;
 use App\Repositories\LikeRepository;
+use App\Exceptions\LikeNotFoundException;
 use App\Commands\DeleteLikeCommandHandler;
 
 class DeleteLikeTest extends TestCase
@@ -21,6 +20,8 @@ class DeleteLikeTest extends TestCase
     {
         return
             [
+                [mt_rand(1, mt_getrandmax())],
+                [mt_rand(1, mt_getrandmax())],
                 [mt_rand(1, mt_getrandmax())],
             ];
     }
@@ -35,11 +36,13 @@ class DeleteLikeTest extends TestCase
         $request = new Request(['id' => $id], [], '');
 
         $deleteLikeCommandHandler = $this->createStub(DeleteLikeCommandHandler::class);
+        $likeRepositoryStub = $this->createStub(LikeRepository::class);
 
-        /**
-         * @var DeleteLikeCommandHandler $deleteLikeCommandHandler
-         */
-        $action = new DeleteLike($deleteLikeCommandHandler, $this->getLogger());
+        $action = new DeleteLike(
+            $deleteLikeCommandHandler,
+            $likeRepositoryStub,
+            $this->getLogger(),
+        );
 
         $response = $action->handle($request);
 
@@ -63,11 +66,13 @@ class DeleteLikeTest extends TestCase
         $request = new Request([], [], '');
 
         $deleteLikeCommandHandler = $this->createStub(DeleteLikeCommandHandler::class);
+        $likeRepositoryStub = $this->createStub(LikeRepository::class);
 
-        /**
-         * @var DeleteLikeCommandHandler $deleteLikeCommandHandler
-         */
-        $action = new DeleteLike($deleteLikeCommandHandler, $this->getLogger());
+        $action = new DeleteLike(
+            $deleteLikeCommandHandler,
+            $likeRepositoryStub,
+            $this->getLogger(),
+        );
 
         $response = $action->handle($request);
 
@@ -88,32 +93,21 @@ class DeleteLikeTest extends TestCase
     {
         $request = new Request(['id' => $id], [], '');
 
-        /**
-         * @var Stub $connectionStub
-         */
-        $connectionStub = $this->createStub(Connection::class);
-        $connectionStub->method('prepare')->willReturn(
-            $this->createStub(PDOStatement::class)
+        $deleteLikeCommandHandler = $this->createStub(DeleteLikeCommandHandler::class);
+        $likeRepositoryStub = $this->createStub(LikeRepository::class);
+
+        $action = new DeleteLike(
+            $deleteLikeCommandHandler,
+            $likeRepositoryStub,
+            $this->getLogger(),
         );
+
         /**
          * @var Stub $likeRepositoryStub
          */
-        $likeRepositoryStub = $this->createStub(LikeRepository::class);
-        $likeRepositoryStub->method('isExists')->willReturn(false);
-
-        /**
-         * @var LikeRepository $likeRepositoryStub
-         * @var Connection $connectionStub
-         */
-        $deleteLikeCommandHandler = new DeleteLikeCommandHandler(
-            $likeRepositoryStub,
-            $connectionStub,
-            $this->getLogger(),
+        $likeRepositoryStub->method('findById')->willThrowException(
+            new LikeNotFoundException('Like not found')
         );
-        /**
-         * @var DeleteLikeCommandHandler $deleteLikeCommandHandler
-         */
-        $action = new DeleteLike($deleteLikeCommandHandler, $this->getLogger());
 
         $response = $action->handle($request);
 

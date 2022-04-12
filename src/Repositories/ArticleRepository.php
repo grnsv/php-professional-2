@@ -22,7 +22,7 @@ class ArticleRepository extends EntityRepository implements ArticleRepositoryInt
     /**
      * @throws ArticleNotFoundException
      */
-    public function get(int $id): Article
+    public function findById(int $id): Article
     {
         $statement = $this->connection->prepare(
             'SELECT * FROM articles WHERE id = :id'
@@ -48,7 +48,7 @@ class ArticleRepository extends EntityRepository implements ArticleRepositoryInt
         }
 
         $article =  new Article(
-            author: $this->userRepository->get($result->author_id),
+            author: $this->userRepository->findById($result->author_id),
             title: $result->title,
             text: $result->text,
         );
@@ -60,7 +60,7 @@ class ArticleRepository extends EntityRepository implements ArticleRepositoryInt
     public function isExists(int $id): bool
     {
         try {
-            $this->get($id);
+            $this->findById($id);
         } catch (ArticleNotFoundException) {
             return false;
         }

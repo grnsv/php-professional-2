@@ -23,7 +23,7 @@ class CommentRepository extends EntityRepository implements CommentRepositoryInt
     /**
      * @throws CommentNotFoundException
      */
-    public function get(int $id): Comment
+    public function findById(int $id): Comment
     {
         $statement = $this->connection->prepare(
             'SELECT * FROM comments WHERE id = :id'
@@ -49,8 +49,8 @@ class CommentRepository extends EntityRepository implements CommentRepositoryInt
         }
 
         $comment =  new Comment(
-            author: $this->userRepository->get($result->author_id),
-            article: $this->articleRepository->get($result->article_id),
+            author: $this->userRepository->findById($result->author_id),
+            article: $this->articleRepository->findById($result->article_id),
             text: $result->text,
         );
 
@@ -61,7 +61,7 @@ class CommentRepository extends EntityRepository implements CommentRepositoryInt
     public function isExists(int $id): bool
     {
         try {
-            $this->get($id);
+            $this->findById($id);
         } catch (CommentNotFoundException) {
             return false;
         }

@@ -11,8 +11,8 @@ use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Http\SuccessfulResponse;
 use App\Http\Actions\FindByEmail;
+use App\Repositories\UserRepository;
 use App\Exceptions\UserNotFoundException;
-use App\Repositories\UserRepositoryInterface;
 
 class FindByEmailTest extends TestCase
 {
@@ -33,7 +33,9 @@ class FindByEmailTest extends TestCase
     {
         return
             [
-                [$this->faker->email(), $this->faker->userName(), $this->faker->word(), $this->faker->password()],
+                $this->getTestData(),
+                $this->getTestData(),
+                $this->getTestData(),
             ];
     }
 
@@ -44,13 +46,15 @@ class FindByEmailTest extends TestCase
     public function testItReturnsErrorResponseIfNoEmailProvided(): void
     {
         $request = new Request([], [], '');
-        $userRepository = $this->getUserRepository([]);
 
-        $action = new FindByEmail($userRepository, $this->getLogger());
+        $action = new FindByEmail(
+            $this->createStub(UserRepository::class),
+            $this->getLogger(),
+        );
+
         $response = $action->handle($request);
 
         $this->assertInstanceOf(ErrorResponse::class, $response);
-
         $this->expectOutputString(
             '{"success":false,"reason":"No such query param in the request: email"}'
         );
@@ -63,17 +67,29 @@ class FindByEmailTest extends TestCase
      * @preserveGlobalState disabled
      * @dataProvider argumentsProvider
      */
-    public function testItReturnsErrorResponseIfUserNotFound($email): void
+    public function testItReturnsErrorResponseIfUserNotFound($user): void
     {
-        $request = new Request(['email' => $email], [], '');
+        $request = new Request(['email' => $user->getEmail()], [], '');
 
-        $userRepository = $this->getUserRepository([]);
-        $action = new FindByEmail($userRepository, $this->getLogger());
+        $userRepositoryStub = $this->createStub(UserRepository::class);
+
+        $action = new FindByEmail(
+            $userRepositoryStub,
+            $this->getLogger(),
+        );
+
+        /**
+         * @var Stub $userRepositoryStub
+         */
+        $userRepositoryStub->method('getUserByEmail')->willThrowException(
+            new UserNotFoundException('User not found')
+        );
 
         $response = $action->handle($request);
-        $this->assertInstanceOf(ErrorResponse::class, $response);
 
-        $this->expectOutputString('{"success":false,"reason":"Not found"}');
+        $this->assertInstanceOf(ErrorResponse::class, $response);
+        $this->expectOutputString('{"success":false,"reason":"User not found"}');
+
         $response->send();
     }
 
@@ -82,70 +98,49 @@ class FindByEmailTest extends TestCase
      * @preserveGlobalState disabled
      * @dataProvider argumentsProvider
      */
-    public function testItReturnsSuccessfulResponse($email, $firstName, $lastName, $password): void
+    public function testItReturnsSuccessfulResponse($user, $password): void
     {
-        $request = new Request(['email' => $email], [], '');
+        $request = new Request(['email' => $user->getEmail()], [], '');
 
-        $userRepository = $this->getUserRepository([
-            new User(
-                $firstName,
-                $lastName,
-                $email,
-                $password,
-            ),
-        ]);
+        $userRepositoryStub = $this->createStub(UserRepository::class);
 
-        $action = new FindByEmail($userRepository, $this->getLogger());
+        $action = new FindByEmail(
+            $userRepositoryStub,
+            $this->getLogger(),
+        );
+
+        /**
+         * @var Stub $userRepositoryStub
+         */
+        $userRepositoryStub->method('getUserByEmail')->willReturn($user);
+
         $response = $action->handle($request);
 
         $this->assertInstanceOf(SuccessfulResponse::class, $response);
         $this->expectOutputString(
             sprintf(
                 '{"success":true,"data":{"email":"%s","name":"%s %s"}}',
-                $email,
-                $firstName,
-                $lastName,
+                $user->getEmail(),
+                $user->getFirstName(),
+                $user->getLastName(),
             )
         );
 
         $response->send();
     }
 
-    private function getUserRepository(array $users): UserRepositoryInterface
+    private function getTestData(): array
     {
-        return new class($users) implements UserRepositoryInterface
-        {
+        $password = $this->faker->password();
 
-            public function __construct(
-                private array $users
-            ) {
-            }
+        $user = new User(
+            $this->faker->firstName(),
+            $this->faker->lastName(),
+            $this->faker->email(),
+            $password,
+        );
+        $user->setId(mt_rand(1, mt_getrandmax()));
 
-            public function get(int $id): User
-            {
-                throw new UserNotFoundException("Not found");
-            }
-
-            public function getUserByEmail(string $email): User
-            {
-                foreach ($this->users as $user) {
-                    if ($user instanceof User && $email === $user->getEmail()) {
-                        return $user;
-                    }
-                }
-
-                throw new UserNotFoundException("Not found");
-            }
-
-            public function isExists(int $id): bool
-            {
-                return false;
-            }
-
-            public function isUserExists(string $email): bool
-            {
-                return false;
-            }
-        };
+        return [$user, $password];
     }
 }

@@ -2,15 +2,14 @@
 
 namespace Tests\Actions;
 
-use PDOStatement;
 use App\Http\Request;
-use App\Drivers\Connection;
 use App\Http\ErrorResponse;
 use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Http\SuccessfulResponse;
 use App\Http\Actions\DeleteArticle;
 use App\Repositories\ArticleRepository;
+use App\Exceptions\ArticleNotFoundException;
 use App\Commands\DeleteArticleCommandHandler;
 
 class DeleteArticleTest extends TestCase
@@ -21,6 +20,8 @@ class DeleteArticleTest extends TestCase
     {
         return
             [
+                [mt_rand(1, mt_getrandmax())],
+                [mt_rand(1, mt_getrandmax())],
                 [mt_rand(1, mt_getrandmax())],
             ];
     }
@@ -35,11 +36,13 @@ class DeleteArticleTest extends TestCase
         $request = new Request(['id' => $id], [], '');
 
         $deleteArticleCommandHandler = $this->createStub(DeleteArticleCommandHandler::class);
+        $articleRepositoryStub = $this->createStub(ArticleRepository::class);
 
-        /**
-         * @var DeleteArticleCommandHandler $deleteArticleCommandHandler
-         */
-        $action = new DeleteArticle($deleteArticleCommandHandler, $this->getLogger());
+        $action = new DeleteArticle(
+            $deleteArticleCommandHandler,
+            $articleRepositoryStub,
+            $this->getLogger(),
+        );
 
         $response = $action->handle($request);
 
@@ -63,11 +66,13 @@ class DeleteArticleTest extends TestCase
         $request = new Request([], [], '');
 
         $deleteArticleCommandHandler = $this->createStub(DeleteArticleCommandHandler::class);
+        $articleRepositoryStub = $this->createStub(ArticleRepository::class);
 
-        /**
-         * @var DeleteArticleCommandHandler $deleteArticleCommandHandler
-         */
-        $action = new DeleteArticle($deleteArticleCommandHandler, $this->getLogger());
+        $action = new DeleteArticle(
+            $deleteArticleCommandHandler,
+            $articleRepositoryStub,
+            $this->getLogger(),
+        );
 
         $response = $action->handle($request);
 
@@ -88,32 +93,21 @@ class DeleteArticleTest extends TestCase
     {
         $request = new Request(['id' => $id], [], '');
 
-        /**
-         * @var Stub $connectionStub
-         */
-        $connectionStub = $this->createStub(Connection::class);
-        $connectionStub->method('prepare')->willReturn(
-            $this->createStub(PDOStatement::class)
+        $deleteArticleCommandHandler = $this->createStub(DeleteArticleCommandHandler::class);
+        $articleRepositoryStub = $this->createStub(ArticleRepository::class);
+
+        $action = new DeleteArticle(
+            $deleteArticleCommandHandler,
+            $articleRepositoryStub,
+            $this->getLogger(),
         );
+
         /**
          * @var Stub $articleRepositoryStub
          */
-        $articleRepositoryStub = $this->createStub(ArticleRepository::class);
-        $articleRepositoryStub->method('isExists')->willReturn(false);
-
-        /**
-         * @var ArticleRepository $articleRepositoryStub
-         * @var Connection $connectionStub
-         */
-        $deleteArticleCommandHandler = new DeleteArticleCommandHandler(
-            $articleRepositoryStub,
-            $connectionStub,
-            $this->getLogger(),
+        $articleRepositoryStub->method('findById')->willThrowException(
+            new ArticleNotFoundException('Article not found')
         );
-        /**
-         * @var DeleteArticleCommandHandler $deleteArticleCommandHandler
-         */
-        $action = new DeleteArticle($deleteArticleCommandHandler, $this->getLogger());
 
         $response = $action->handle($request);
 

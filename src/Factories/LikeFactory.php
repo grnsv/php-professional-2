@@ -3,24 +3,24 @@
 namespace App\Factories;
 
 use App\Entities\Like\Like;
-use App\Entities\User\User;
-use App\Commands\GetCommand;
 use JetBrains\PhpStorm\Pure;
+use App\Container\DIContainer;
 use App\Decorator\LikeDecorator;
-use App\Entities\Article\Article;
+use App\Repositories\UserRepository;
+use App\Repositories\ArticleRepository;
 
 final class LikeFactory implements LikeFactoryInterface
 {
     #[Pure] public function create(LikeDecorator $likeDecorator): Like
     {
         /**
-         * @var EntityManagerFactoryInterface $entityMangerFactory
+         * @var DIContainer $container
          */
-        $entityMangerFactory = EntityManagerFactory::getInstance();
-        $command = new GetCommand($entityMangerFactory->getRepository(User::class));
-        $user = $command->handle($likeDecorator->userId);
-        $command = new GetCommand($entityMangerFactory->getRepository(Article::class));
-        $article = $command->handle($likeDecorator->articleId);
+        $container = DIContainer::getInstance();
+        $userRepository = $container->get(UserRepository::class);
+        $articleRepository = $container->get(ArticleRepository::class);
+        $user = $userRepository->findById($likeDecorator->userId);
+        $article = $articleRepository->findById($likeDecorator->articleId);
         return new Like(
             $user,
             $article,

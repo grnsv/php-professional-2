@@ -37,7 +37,7 @@ class TokenQueryHandler implements TokenQueryHandlerInterface
                 foreach ($tokensData as $tokenData) {
                     $tokens[$tokenData->token] = new AuthToken(
                         $tokenData->token,
-                        $this->userRepository->get($tokenData->user_id),
+                        $this->userRepository->findById($tokenData->user_id),
                         new DateTimeImmutable($tokenData->expires_on)
                     );
                 }

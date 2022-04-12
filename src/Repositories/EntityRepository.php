@@ -11,6 +11,6 @@ abstract class EntityRepository implements EntityRepositoryInterface
     {
     }
 
-    abstract public function get(int $id): EntityInterface;
+    abstract public function findById(int $id): EntityInterface;
     abstract public function isExists(int $id): bool;
 }

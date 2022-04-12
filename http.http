@@ -1,0 +1,75 @@
+POST http://127.0.0.1:8000/user/create
+
+{
+    "firstName": "Name",
+    "lastName": "Surname",
+    "email": "email@example.com",
+    "password": "password"
+}
+
+###
+
+POST http://127.0.0.1:8000/login
+
+{
+    "email": "email@example.com",
+    "password": "password"
+}
+
+###
+
+POST http://127.0.0.1:8000/article/create
+Authorization: Bearer 36a7f19c205567a70eadd246d9d892a7b0edd01ae20925ba4e16a051b4d11ee8223b8a5024f628dc
+
+{
+    "authorId": "1",
+    "title": "Title",
+    "text": "Text"
+}
+
+###
+
+POST http://127.0.0.1:8000/comment/create
+Authorization: Bearer 36a7f19c205567a70eadd246d9d892a7b0edd01ae20925ba4e16a051b4d11ee8223b8a5024f628dc
+
+{
+    "articleId": "1",
+    "text": "Text"
+}
+
+###
+
+POST http://127.0.0.1:8000/like/create
+Authorization: Bearer 36a7f19c205567a70eadd246d9d892a7b0edd01ae20925ba4e16a051b4d11ee8223b8a5024f628dc
+
+{
+    "articleId": "1"
+}
+
+###
+
+GET http://127.0.0.1:8000/user/show?email=email@example.com
+
+###
+
+GET http://127.0.0.1:8000/article/show?id=1
+
+###
+
+GET http://127.0.0.1:8000/comment/show?id=1
+
+###
+
+DELETE http://127.0.0.1:8000/like?id=1
+
+###
+
+DELETE http://127.0.0.1:8000/comment?id=1
+
+###
+
+DELETE http://127.0.0.1:8000/article?id=1
+
+###
+
+DELETE http://127.0.0.1:8000/user?id=1

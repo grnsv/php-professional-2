@@ -2,17 +2,11 @@
 
 namespace App\Factories\Commands;
 
-use App\Drivers\Connection;
 use App\Entities\Like\Like;
 use App\Entities\User\User;
-use Psr\Log\LoggerInterface;
 use App\Container\DIContainer;
 use App\Entities\Article\Article;
 use App\Entities\Comment\Comment;
-use App\Repositories\LikeRepository;
-use App\Repositories\UserRepository;
-use App\Repositories\ArticleRepository;
-use App\Repositories\CommentRepository;
 use App\Commands\CommandHandlerInterface;
 use App\Commands\CreateLikeCommandHandler;
 use App\Commands\CreateUserCommandHandler;
@@ -27,29 +21,11 @@ class CommandHandlerFactory implements CommandHandlerFactoryInterface
          * @var DIContainer $container
          */
         $container = DIContainer::getInstance();
-        $connection = $container->get(Connection::class);
-        $loggerInterface = $container->get(LoggerInterface::class);
         return match ($entityType) {
-            User::class => new CreateUserCommandHandler(
-                $container->get(UserRepository::class),
-                $connection,
-                $loggerInterface,
-            ),
-            Article::class => new CreateArticleCommandHandler(
-                $container->get(ArticleRepository::class),
-                $connection,
-                $loggerInterface,
-            ),
-            Comment::class => new CreateCommentCommandHandler(
-                $container->get(CommentRepository::class),
-                $connection,
-                $loggerInterface,
-            ),
-            Like::class => new CreateLikeCommandHandler(
-                $container->get(LikeRepository::class),
-                $connection,
-                $loggerInterface,
-            ),
+            User::class => $container->get(CreateUserCommandHandler::class),
+            Article::class => $container->get(CreateArticleCommandHandler::class),
+            Comment::class => $container->get(CreateCommentCommandHandler::class),
+            Like::class => $container->get(CreateLikeCommandHandler::class),
         };
     }
 }

@@ -21,7 +21,7 @@ class UserRepository extends EntityRepository implements UserRepositoryInterface
     /**
      * @throws UserNotFoundException
      */
-    public function get(int $id): User
+    public function findById(int $id): User
     {
         $statement = $this->connection->prepare(
             'SELECT * FROM users WHERE id = :id'
@@ -76,7 +76,7 @@ class UserRepository extends EntityRepository implements UserRepositoryInterface
     public function isExists(int $id): bool
     {
         try {
-            $this->get($id);
+            $this->findById($id);
         } catch (UserNotFoundException) {
             return false;
         }

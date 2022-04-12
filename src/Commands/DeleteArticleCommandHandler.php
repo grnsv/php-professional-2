@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use App\Drivers\Connection;
 use Psr\Log\LoggerInterface;
+use App\Entities\Article\Article;
 use App\Exceptions\ArticleNotFoundException;
 use App\Repositories\ArticleRepositoryInterface;
 
@@ -17,13 +18,18 @@ class DeleteArticleCommandHandler implements CommandHandlerInterface
     }
 
     /**
-     * @param DeleteEntityCommand $command
+     * @param EntityCommand $command
      */
     public function handle(CommandInterface $command): void
     {
         $this->logger->info("Delete article command started");
 
-        $id = $command->getId();
+        /**
+         * @var Article $article
+         */
+        $article = $command->getEntity();
+        $id = $article->getId();
+
         if ($this->articleRepository->isExists($id)) {
             $this->connection->prepare($this->getSQL())->execute(
                 [

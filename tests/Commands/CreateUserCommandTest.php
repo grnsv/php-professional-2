@@ -8,13 +8,11 @@ use Faker\Generator;
 use App\Drivers\Connection;
 use App\Entities\User\User;
 use Tests\Traits\LoggerTrait;
+use App\Commands\EntityCommand;
 use PHPUnit\Framework\TestCase;
 use App\Repositories\UserRepository;
-use App\Commands\CreateEntityCommand;
 use App\Exceptions\UserNotFoundException;
 use App\Commands\CreateUserCommandHandler;
-use App\Exceptions\UserEmailExistsException;
-use App\Repositories\UserRepositoryInterface;
 
 class CreateUserCommandTest extends TestCase
 {
@@ -35,46 +33,48 @@ class CreateUserCommandTest extends TestCase
     {
         return
             [
-                [$this->faker->userName(), $this->faker->word(), $this->faker->email(), $this->faker->password()],
+                $this->getTestData(),
+                $this->getTestData(),
+                $this->getTestData(),
             ];
     }
 
     /**
      * @dataProvider argumentsProvider
      */
-    public function testItThrowsAnExceptionWhenUserAlreadyExists($firstName, $lastName, $email, $password): void
+    public function testItThrowsAnExceptionWhenUserAlreadyExists($user, $password): void
     {
-        /**
-         * @var Stub $connectionStub
-         */
-        $connectionStub = $this->createStub(Connection::class);
-        $connectionStub->method('prepare')->willReturn(
-            $this->createStub(PDOStatement::class)
-        );
-        /**
-         * @var Stub $userRepositoryStub
-         */
         $userRepositoryStub = $this->createStub(UserRepository::class);
-        $userRepositoryStub->method('isUserExists')->willReturn(true);
+        $connectionStub = $this->createStub(Connection::class);
 
-        /**
-         * @var UserRepository $userRepositoryStub
-         * @var Connection $connectionStub
-         */
         $createUserCommandHandler = new CreateUserCommandHandler(
             $userRepositoryStub,
             $connectionStub,
             $this->getLogger(),
         );
 
-        $this->expectException(UserEmailExistsException::class);
-        $this->expectExceptionMessage('Пользователь с таким email уже существует в системе');
+        /**
+         * @var Stub $connectionStub
+         */
+        $connectionStub->method('prepare')->willReturn(
+            $this->createStub(PDOStatement::class)
+        );
 
-        $command = new CreateEntityCommand(
+        /**
+         * @var Stub $userRepositoryStub
+         */
+        $userRepositoryStub->method('findById')->willThrowException(
+            new UserNotFoundException('User not found')
+        );
+
+        $this->expectException(UserNotFoundException::class);
+        $this->expectExceptionMessage('User not found');
+
+        $command = new EntityCommand(
             new User(
-                $firstName,
-                $lastName,
-                $email,
+                $user->getFirstName(),
+                $user->getLastName(),
+                $user->getEmail(),
                 $password,
             )
         );
@@ -86,52 +86,61 @@ class CreateUserCommandTest extends TestCase
      * @throws UserNotFoundException
      * @dataProvider argumentsProvider
      */
-    public function testItSavesUserToDatabase($firstName, $lastName, $email, $password): void
+    public function testItSavesUserToDatabase($user, $password): void
     {
-        /**
-         * @var Stub $connectionStub
-         */
-        $connectionStub = $this->createStub(Connection::class);
-        /**
-         * @var Stub $userRepositoryStub
-         */
         $userRepositoryStub = $this->createStub(UserRepository::class);
-        /**
-         * @var MockObject $statementMock
-         */
+        $connectionStub = $this->createStub(Connection::class);
         $statementMock = $this->createMock(PDOStatement::class);
 
-        $userRepositoryStub->method('isUserExists')->willReturn(false);
-        $connectionStub->method('prepare')->willReturn($statementMock);
-        $statementMock
-            ->expects($this->once())
-            ->method('execute')
-            ->with([
-                ':firstName' => $firstName,
-                ':lastName' => $lastName,
-                ':email' => $email,
-                ':password' => hash('sha256', $email . $password),
-            ]);
-
-        /**
-         * @var UserRepositoryInterface $userRepositoryStub
-         * @var Connection $connectionStub
-         */
         $createUserCommandHandler = new CreateUserCommandHandler(
             $userRepositoryStub,
             $connectionStub,
             $this->getLogger(),
         );
 
-        $command = new CreateEntityCommand(
+        /**
+         * @var Stub $connectionStub
+         */
+        $connectionStub->method('prepare')->willReturn($statementMock);
+
+        /**
+         * @var MockObject $statementMock
+         */
+        $statementMock
+            ->expects($this->once())
+            ->method('execute')
+            ->with([
+                ':firstName' => $user->getFirstName(),
+                ':lastName' => $user->getLastName(),
+                ':email' => $user->getEmail(),
+                ':password' => $user->getPassword(),
+            ]);
+
+        $command = new EntityCommand(
             new User(
-                $firstName,
-                $lastName,
-                $email,
+                $user->getFirstName(),
+                $user->getLastName(),
+                $user->getEmail(),
                 $password,
             )
         );
 
         $createUserCommandHandler->handle($command);
+    }
+
+    private function getTestData(): array
+    {
+        $password = $this->faker->password();
+
+        $user = new User(
+            $this->faker->firstName(),
+            $this->faker->lastName(),
+            $this->faker->email(),
+            $password,
+        );
+        $user->setId(mt_rand(1, mt_getrandmax()));
+        $user->setPassword($password);
+
+        return [$user, $password];
     }
 }

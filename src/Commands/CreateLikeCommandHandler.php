@@ -5,6 +5,7 @@ namespace App\Commands;
 use App\Drivers\Connection;
 use App\Entities\Like\Like;
 use Psr\Log\LoggerInterface;
+use App\Entities\Like\LikeInterface;
 use App\Repositories\LikeRepositoryInterface;
 
 class CreateLikeCommandHandler implements CommandHandlerInterface
@@ -17,9 +18,9 @@ class CreateLikeCommandHandler implements CommandHandlerInterface
     }
 
     /**
-     * @param CreateEntityCommand $command
+     * @param EntityCommand $command
      */
-    public function handle(CommandInterface $command): void
+    public function handle(CommandInterface $command): LikeInterface
     {
         $this->logger->info("Create like command started");
 
@@ -27,15 +28,13 @@ class CreateLikeCommandHandler implements CommandHandlerInterface
          * @var Like $like
          */
         $like = $command->getEntity();
-        $userId = $like->getUser()->getId();
-        $articleId = $like->getArticle()->getId();
 
         try {
             $this->connection->beginTransaction();
             $this->connection->prepare($this->getSQL())->execute(
                 [
-                    ':user_id' => $userId,
-                    ':article_id' => $articleId,
+                    ':user_id' => $like->getUser()->getId(),
+                    ':article_id' => $like->getArticle()->getId(),
                 ]
             );
 
@@ -44,7 +43,16 @@ class CreateLikeCommandHandler implements CommandHandlerInterface
             $this->connection->rollback();
             print "Error!: " . $e->getMessage() . PHP_EOL;
         }
-        $this->logger->info("Like created userId: $userId articleId: $articleId");
+
+        $data = [
+            'id' => $like->getId(),
+            'userId' => $like->getUser()->getId(),
+            'articleId' => $like->getArticle()->getId(),
+        ];
+
+        $this->logger->info('Created new Like', $data);
+
+        return $like->getId() ? $like : $this->likeRepository->findById($this->connection->lastInsertId());
     }
 
     public function getSQL(): string

@@ -17,31 +17,29 @@ class CommentRepositoryTest extends TestCase
 
     public function testItThrowsAnExceptionWhenCommentNotFound(): void
     {
-        /**
-         * @var Stub $connectionStub
-         */
         $connectionStub = $this->createStub(Connection::class);
-        /**
-         * @var Stub $statementStub
-         */
         $statementStub = $this->createStub(PDOStatement::class);
 
-        $connectionStub->method('prepare')->willReturn($statementStub);
-        $statementStub->method('fetch')->willReturn(false);
-
-        /**
-         * @var Connection $connectionStub
-         */
-        $repository = new CommentRepository(
+        $commentRepository = new CommentRepository(
             $connectionStub,
             $this->createStub(UserRepository::class),
             $this->createStub(ArticleRepository::class),
             $this->getLogger(),
         );
 
+        /**
+         * @var Stub $connectionStub
+         */
+        $connectionStub->method('prepare')->willReturn($statementStub);
+
+        /**
+         * @var Stub $statementStub
+         */
+        $statementStub->method('fetch')->willReturn(false);
+
         $this->expectException(CommentNotFoundException::class);
         $this->expectExceptionMessage('Comment not found');
 
-        $repository->get(mt_rand(1, mt_getrandmax()));
+        $commentRepository->findById(mt_rand(1, mt_getrandmax()));
     }
 }
