@@ -28,51 +28,53 @@ class UserRepositoryTest extends TestCase
 
     public function testItThrowsAnExceptionWhenUserNotFound(): void
     {
+        $connectionStub = $this->createStub(Connection::class);
+        $statementStub = $this->createStub(PDOStatement::class);
+
+        $userRepository = new UserRepository(
+            $connectionStub,
+            $this->getLogger(),
+        );
+
         /**
          * @var Stub $connectionStub
          */
-        $connectionStub = $this->createStub(Connection::class);
+        $connectionStub->method('prepare')->willReturn($statementStub);
+
         /**
          * @var Stub $statementStub
          */
-        $statementStub = $this->createStub(PDOStatement::class);
-
-        $connectionStub->method('prepare')->willReturn($statementStub);
         $statementStub->method('fetch')->willReturn(false);
-
-        /**
-         * @var Connection $connectionStub
-         */
-        $repository = new UserRepository($connectionStub, $this->getLogger());
 
         $this->expectException(UserNotFoundException::class);
         $this->expectExceptionMessage('User not found');
 
-        $repository->get(mt_rand(1, mt_getrandmax()));
+        $userRepository->findById(mt_rand(1, mt_getrandmax()));
     }
 
     public function testItThrowsAnExceptionWhenUserNotFoundByEmail(): void
     {
+        $connectionStub = $this->createStub(Connection::class);
+        $statementStub = $this->createStub(PDOStatement::class);
+
+        $userRepository = new UserRepository(
+            $connectionStub,
+            $this->getLogger(),
+        );
+
         /**
          * @var Stub $connectionStub
          */
-        $connectionStub = $this->createStub(Connection::class);
+        $connectionStub->method('prepare')->willReturn($statementStub);
+
         /**
          * @var Stub $statementStub
          */
-        $statementStub = $this->createStub(PDOStatement::class);
-
-        $connectionStub->method('prepare')->willReturn($statementStub);
         $statementStub->method('fetch')->willReturn(false);
-
-        /**
-         * @var Connection $connectionStub
-         */
-        $repository = new UserRepository($connectionStub, $this->getLogger());
 
         $this->expectException(UserNotFoundException::class);
         $this->expectExceptionMessage('User not found');
 
-        $repository->getUserByEmail($this->faker->email());
+        $userRepository->getUserByEmail($this->faker->email());
     }
 }

@@ -2,10 +2,14 @@
 
 use Dotenv\Dotenv;
 use Monolog\Logger;
+use Faker\Provider\Lorem;
 use App\Drivers\Connection;
 use Psr\Log\LoggerInterface;
 use App\Container\DIContainer;
+use Faker\Provider\ru_RU\Text;
+use Faker\Provider\ru_RU\Person;
 use App\Queries\TokenQueryHandler;
+use Faker\Provider\ru_RU\Internet;
 use Monolog\Handler\StreamHandler;
 use App\Drivers\PdoConnectionDriver;
 use App\Repositories\LikeRepository;
@@ -33,6 +37,18 @@ require_once __DIR__ . '/vendor/autoload.php';
 Dotenv::createImmutable(__DIR__)->safeLoad();
 
 $container = DIContainer::getInstance();
+
+$faker = new \Faker\Generator();
+
+$faker->addProvider(new Person($faker));
+$faker->addProvider(new Text($faker));
+$faker->addProvider(new Internet($faker));
+$faker->addProvider(new Lorem($faker));
+
+$container->bind(
+    \Faker\Generator::class,
+    $faker
+);
 
 $container->bind(
     UserRepositoryInterface::class,

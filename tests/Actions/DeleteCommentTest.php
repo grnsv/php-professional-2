@@ -2,15 +2,14 @@
 
 namespace Tests\Actions;
 
-use PDOStatement;
 use App\Http\Request;
-use App\Drivers\Connection;
 use App\Http\ErrorResponse;
 use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Http\SuccessfulResponse;
 use App\Http\Actions\DeleteComment;
 use App\Repositories\CommentRepository;
+use App\Exceptions\CommentNotFoundException;
 use App\Commands\DeleteCommentCommandHandler;
 
 class DeleteCommentTest extends TestCase
@@ -21,6 +20,8 @@ class DeleteCommentTest extends TestCase
     {
         return
             [
+                [mt_rand(1, mt_getrandmax())],
+                [mt_rand(1, mt_getrandmax())],
                 [mt_rand(1, mt_getrandmax())],
             ];
     }
@@ -35,11 +36,13 @@ class DeleteCommentTest extends TestCase
         $request = new Request(['id' => $id], [], '');
 
         $deleteCommentCommandHandler = $this->createStub(DeleteCommentCommandHandler::class);
+        $commentRepositoryStub = $this->createStub(CommentRepository::class);
 
-        /**
-         * @var DeleteCommentCommandHandler $deleteCommentCommandHandler
-         */
-        $action = new DeleteComment($deleteCommentCommandHandler, $this->getLogger());
+        $action = new DeleteComment(
+            $deleteCommentCommandHandler,
+            $commentRepositoryStub,
+            $this->getLogger(),
+        );
 
         $response = $action->handle($request);
 
@@ -63,11 +66,13 @@ class DeleteCommentTest extends TestCase
         $request = new Request([], [], '');
 
         $deleteCommentCommandHandler = $this->createStub(DeleteCommentCommandHandler::class);
+        $commentRepositoryStub = $this->createStub(CommentRepository::class);
 
-        /**
-         * @var DeleteCommentCommandHandler $deleteCommentCommandHandler
-         */
-        $action = new DeleteComment($deleteCommentCommandHandler, $this->getLogger());
+        $action = new DeleteComment(
+            $deleteCommentCommandHandler,
+            $commentRepositoryStub,
+            $this->getLogger(),
+        );
 
         $response = $action->handle($request);
 
@@ -88,32 +93,21 @@ class DeleteCommentTest extends TestCase
     {
         $request = new Request(['id' => $id], [], '');
 
-        /**
-         * @var Stub $connectionStub
-         */
-        $connectionStub = $this->createStub(Connection::class);
-        $connectionStub->method('prepare')->willReturn(
-            $this->createStub(PDOStatement::class)
+        $deleteCommentCommandHandler = $this->createStub(DeleteCommentCommandHandler::class);
+        $commentRepositoryStub = $this->createStub(CommentRepository::class);
+
+        $action = new DeleteComment(
+            $deleteCommentCommandHandler,
+            $commentRepositoryStub,
+            $this->getLogger(),
         );
+
         /**
          * @var Stub $commentRepositoryStub
          */
-        $commentRepositoryStub = $this->createStub(CommentRepository::class);
-        $commentRepositoryStub->method('isExists')->willReturn(false);
-
-        /**
-         * @var CommentRepository $commentRepositoryStub
-         * @var Connection $connectionStub
-         */
-        $deleteCommentCommandHandler = new DeleteCommentCommandHandler(
-            $commentRepositoryStub,
-            $connectionStub,
-            $this->getLogger(),
+        $commentRepositoryStub->method('findById')->willThrowException(
+            new CommentNotFoundException('Comment not found')
         );
-        /**
-         * @var DeleteCommentCommandHandler $deleteCommentCommandHandler
-         */
-        $action = new DeleteComment($deleteCommentCommandHandler, $this->getLogger());
 
         $response = $action->handle($request);
 

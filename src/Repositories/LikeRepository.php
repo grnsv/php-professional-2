@@ -23,7 +23,7 @@ class LikeRepository extends EntityRepository implements LikeRepositoryInterface
     /**
      * @throws LikeNotFoundException
      */
-    public function get(int $id): Like
+    public function findById(int $id): Like
     {
         $statement = $this->connection->prepare(
             'SELECT * FROM likes WHERE id = :id'
@@ -49,8 +49,8 @@ class LikeRepository extends EntityRepository implements LikeRepositoryInterface
         }
 
         $like =  new Like(
-            user: $this->userRepository->get($result->user_id),
-            article: $this->articleRepository->get($result->article_id),
+            user: $this->userRepository->findById($result->user_id),
+            article: $this->articleRepository->findById($result->article_id),
         );
 
         $like->setId($result->id);
@@ -60,7 +60,7 @@ class LikeRepository extends EntityRepository implements LikeRepositoryInterface
     public function isExists(int $id): bool
     {
         try {
-            $this->get($id);
+            $this->findById($id);
         } catch (LikeNotFoundException) {
             return false;
         }
@@ -78,7 +78,15 @@ class LikeRepository extends EntityRepository implements LikeRepositoryInterface
             ':articleId' => (string)$articleId,
         ]);
 
-        $likes = $statement->fetch(PDO::FETCH_ASSOC);
+        $likes = [];
+        while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
+            $like = new Like(
+                $this->userRepository->findById($row->user_id),
+                $this->articleRepository->findById($row->article_id),
+            );
+            $like->setId($row->id);
+            $likes[] = $like;
+        }
 
         return $likes;
     }

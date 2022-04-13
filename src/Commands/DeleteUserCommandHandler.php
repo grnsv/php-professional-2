@@ -3,6 +3,7 @@
 namespace App\Commands;
 
 use App\Drivers\Connection;
+use App\Entities\User\User;
 use Psr\Log\LoggerInterface;
 use App\Exceptions\UserNotFoundException;
 use App\Repositories\UserRepositoryInterface;
@@ -17,13 +18,18 @@ class DeleteUserCommandHandler implements CommandHandlerInterface
     }
 
     /**
-     * @param DeleteEntityCommand $command
+     * @param EntityCommand $command
      */
     public function handle(CommandInterface $command): void
     {
         $this->logger->info("Delete user command started");
 
-        $id = $command->getId();
+        /**
+         * @var User $user
+         */
+        $user = $command->getEntity();
+        $id = $user->getId();
+
         if ($this->userRepository->isExists($id)) {
             $this->connection->prepare($this->getSQL())->execute(
                 [
@@ -36,6 +42,7 @@ class DeleteUserCommandHandler implements CommandHandlerInterface
             throw new UserNotFoundException('User not found');
         }
     }
+
 
     public function getSQL(): string
     {

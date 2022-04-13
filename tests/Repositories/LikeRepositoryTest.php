@@ -33,61 +33,19 @@ class LikeRepositoryTest extends TestCase
 
     public function argumentsProvider(): iterable
     {
-        $user = new User(
-            $this->faker->userName(),
-            $this->faker->word(),
-            $this->faker->email(),
-            $this->faker->password(),
-        );
-        $user->setId(mt_rand(1, mt_getrandmax()));
-        $article = new Article(
-            $user,
-            $this->faker->word(),
-            $this->faker->text()
-        );
-        $article->setId(mt_rand(1, mt_getrandmax()));
-
-        $likesQty = mt_rand(1, 10);
-        $likes = [];
-
-        for ($i = 0; $i < $likesQty; $i++) {
-            $user = new User(
-                $this->faker->userName(),
-                $this->faker->word(),
-                $this->faker->email(),
-                $this->faker->password(),
-            );
-            $user->setId(mt_rand(1, mt_getrandmax()));
-
-            $likes[] = new Like(
-                $user,
-                $article,
-            );
-        }
-
         return
             [
-                [$article->getId(), $likes],
+                $this->getTestData(),
+                $this->getTestData(),
+                $this->getTestData(),
             ];
     }
 
     public function testItThrowsAnExceptionWhenLikeNotFound(): void
     {
-        /**
-         * @var Stub $connectionStub
-         */
         $connectionStub = $this->createStub(Connection::class);
-        /**
-         * @var Stub $statementStub
-         */
         $statementStub = $this->createStub(PDOStatement::class);
 
-        $connectionStub->method('prepare')->willReturn($statementStub);
-        $statementStub->method('fetch')->willReturn(false);
-
-        /**
-         * @var Connection $connectionStub
-         */
         $repository = new LikeRepository(
             $connectionStub,
             $this->createStub(UserRepository::class),
@@ -95,40 +53,110 @@ class LikeRepositoryTest extends TestCase
             $this->getLogger(),
         );
 
+        /**
+         * @var Stub $connectionStub
+         */
+        $connectionStub->method('prepare')->willReturn($statementStub);
+
+        /**
+         * @var Stub $statementStub
+         */
+        $statementStub->method('fetch')->willReturn(false);
+
         $this->expectException(LikeNotFoundException::class);
         $this->expectExceptionMessage('Like not found');
 
-        $repository->get(mt_rand(1, mt_getrandmax()));
+        $repository->findById(mt_rand(1, mt_getrandmax()));
     }
 
     /**
      * @dataProvider argumentsProvider
      */
-    public function testItReturnsLikesByArticleId($articleId, $expectedValue): void
+    public function testItReturnsLikesByArticleId($article, $likes, $users, $rows): void
     {
+        $connectionStub = $this->createStub(Connection::class);
+        $statementStub = $this->createStub(PDOStatement::class);
+        $userRepository = $this->createStub(UserRepository::class);
+        $articleRepository = $this->createStub(ArticleRepository::class);
+
+        $likeRepository = new LikeRepository(
+            $connectionStub,
+            $userRepository,
+            $articleRepository,
+            $this->getLogger(),
+        );
+
         /**
          * @var Stub $connectionStub
          */
-        $connectionStub = $this->createStub(Connection::class);
+        $connectionStub->method('prepare')->willReturn($statementStub);
+
         /**
          * @var Stub $statementStub
          */
-        $statementStub = $this->createStub(PDOStatement::class);
-
-        $connectionStub->method('prepare')->willReturn($statementStub);
-        $statementStub->method('fetch')->willReturn($expectedValue);
+        $statementStub->method('fetch')->willReturnOnConsecutiveCalls(...$rows);
 
         /**
-         * @var Connection $connectionStub
+         * @var Stub $userRepository
          */
-        $repository = new LikeRepository(
-            $connectionStub,
-            $this->createStub(UserRepository::class),
-            $this->createStub(ArticleRepository::class),
-            $this->getLogger(),
-        );
-        $likes = $repository->getByArticleId($articleId);
+        $userRepository->method('findById')->willReturnOnConsecutiveCalls(...$users);
 
-        $this->assertEquals($expectedValue, $likes);
+        /**
+         * @var Stub $articleRepository
+         */
+        $articleRepository->method('findById')->willReturn($article);
+
+        $result = $likeRepository->getByArticleId($article->getId());
+
+        $this->assertEquals($likes, $result);
+    }
+
+    private function getTestData(): array
+    {
+        $author = new User(
+            $this->faker->firstName(),
+            $this->faker->lastName(),
+            $this->faker->email(),
+            $this->faker->password(),
+        );
+        $author->setId(mt_rand(1, mt_getrandmax()));
+
+        $article = new Article(
+            $author,
+            $this->faker->title(),
+            $this->faker->text(),
+        );
+        $article->setId(mt_rand(1, mt_getrandmax()));
+
+        $likesQty = mt_rand(1, 10);
+        $users = [];
+        $likes = [];
+        $rows = [];
+
+        for ($i = 0; $i < $likesQty; $i++) {
+            $user = new User(
+                $this->faker->firstName(),
+                $this->faker->lastName(),
+                $this->faker->email(),
+                $this->faker->password(),
+            );
+            $user->setId(mt_rand(1, mt_getrandmax()));
+            $users[] = $user;
+
+            $like = new Like(
+                $user,
+                $article,
+            );
+            $like->setId(mt_rand(1, mt_getrandmax()));
+            $likes[] = $like;
+
+            $rows[] = (object) [
+                'id' => $like->getId(),
+                'user_id' => $like->getUser()->getId(),
+                'article_id' => $like->getArticle()->getId(),
+            ];
+        }
+
+        return [$article, $likes, $users, $rows];
     }
 }

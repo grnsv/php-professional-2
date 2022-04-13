@@ -7,8 +7,8 @@ use App\Http\Response;
 use App\Entities\User\User;
 use App\Http\ErrorResponse;
 use Psr\Log\LoggerInterface;
+use App\Commands\EntityCommand;
 use App\Http\SuccessfulResponse;
-use App\Commands\CreateEntityCommand;
 use App\Commands\CreateUserCommandHandler;
 
 class CreateUser implements ActionInterface
@@ -29,7 +29,7 @@ class CreateUser implements ActionInterface
                 $request->jsonBodyField('password'),
             );
 
-            $this->createUserCommandHandler->handle(new CreateEntityCommand($user));
+            $user = $this->createUserCommandHandler->handle(new EntityCommand($user));
         } catch (\Exception $e) {
             $message = $e->getMessage();
             $this->logger->error($e);
@@ -37,6 +37,7 @@ class CreateUser implements ActionInterface
         }
 
         $data = [
+            'id' => $user->getId(),
             'firstName' => $user->getFirstName(),
             'lastName' => $user->getLastName(),
             'email' => $user->getEmail(),

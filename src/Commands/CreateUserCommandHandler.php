@@ -6,7 +6,6 @@ use App\Drivers\Connection;
 use App\Entities\User\User;
 use Psr\Log\LoggerInterface;
 use App\Entities\User\UserInterface;
-use App\Exceptions\UserEmailExistsException;
 use App\Repositories\UserRepositoryInterface;
 
 class CreateUserCommandHandler implements CommandHandlerInterface
@@ -19,10 +18,9 @@ class CreateUserCommandHandler implements CommandHandlerInterface
     }
 
     /**
-     * @throws UserEmailExistsException
-     * @param CreateEntityCommand $command
+     * @param EntityCommand $command
      */
-    public function handle(CommandInterface $command): void
+    public function handle(CommandInterface $command): UserInterface
     {
         $this->logger->info("Create user command started");
 
@@ -32,33 +30,42 @@ class CreateUserCommandHandler implements CommandHandlerInterface
         $user = $command->getEntity();
         $email = $user->getEmail();
 
-        if (!$this->userRepository->isUserExists($email)) {
-            try {
-                $this->connection->beginTransaction();
-                $this->connection->prepare($this->getSQL())->execute(
-                    [
-                        ':firstName' => $user->getFirstName(),
-                        ':lastName' => $user->getLastName(),
-                        ':email' => $email,
-                        ':password' => $user->setPassword($user->getPassword()),
-                    ]
-                );
+        try {
+            $this->connection->beginTransaction();
+            $this->connection->prepare($this->getSQL())->execute(
+                [
+                    ':firstName' => $user->getFirstName(),
+                    ':lastName' => $user->getLastName(),
+                    ':email' => $email,
+                    ':password' => $user->setPassword($user->getPassword()),
+                ]
+            );
 
-                $this->connection->commit();
-            } catch (\PDOException $e) {
-                $this->connection->rollback();
-                print "Error!: " . $e->getMessage() . PHP_EOL;
-            }
-            $this->logger->info("User created email: $email");
-        } else {
-            $this->logger->warning("User already exists: $email");
-            throw new UserEmailExistsException();
+            $this->connection->commit();
+        } catch (\PDOException $e) {
+            $this->connection->rollback();
+            print "Error!: " . $e->getMessage() . PHP_EOL;
         }
+
+        $data = [
+            'id' => $user->getId(),
+            'firstName' => $user->getFirstName(),
+            'lastName' => $user->getLastName(),
+            'email' => $user->getEmail(),
+        ];
+
+        $this->logger->info('Created new User', $data);
+
+        return $user->getId() ? $user : $this->userRepository->findById($this->connection->lastInsertId());
     }
 
     public function getSQL(): string
     {
         return "INSERT INTO users (first_name, last_name, email, password) 
-        VALUES (:firstName, :lastName, :email, :password)";
+        VALUES (:firstName, :lastName, :email, :password)
+        ON CONFLICT (email) DO UPDATE SET
+            first_name = :firstName,
+            last_name = :lastName
+        ";
     }
 }

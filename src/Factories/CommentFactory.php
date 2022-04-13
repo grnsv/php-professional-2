@@ -2,25 +2,25 @@
 
 namespace App\Factories;
 
-use App\Entities\User\User;
-use App\Commands\GetCommand;
 use JetBrains\PhpStorm\Pure;
-use App\Entities\Article\Article;
+use App\Container\DIContainer;
 use App\Entities\Comment\Comment;
 use App\Decorator\CommentDecorator;
+use App\Repositories\UserRepository;
+use App\Repositories\ArticleRepository;
 
 final class CommentFactory implements CommentFactoryInterface
 {
     #[Pure] public function create(CommentDecorator $commentDecorator): Comment
     {
         /**
-         * @var EntityManagerFactoryInterface $entityMangerFactory
+         * @var DIContainer $container
          */
-        $entityMangerFactory = EntityManagerFactory::getInstance();
-        $command = new GetCommand($entityMangerFactory->getRepository(User::class));
-        $author = $command->handle($commentDecorator->authorId);
-        $command = new GetCommand($entityMangerFactory->getRepository(Article::class));
-        $article = $command->handle($commentDecorator->articleId);
+        $container = DIContainer::getInstance();
+        $userRepository = $container->get(UserRepository::class);
+        $articleRepository = $container->get(ArticleRepository::class);
+        $author = $userRepository->findById($commentDecorator->authorId);
+        $article = $articleRepository->findById($commentDecorator->articleId);
         return new Comment(
             $author,
             $article,

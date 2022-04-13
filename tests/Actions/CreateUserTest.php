@@ -5,6 +5,7 @@ namespace Tests\Actions;
 use Faker\Factory;
 use Faker\Generator;
 use App\Http\Request;
+use App\Entities\User\User;
 use App\Http\ErrorResponse;
 use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
@@ -31,12 +32,9 @@ class CreateUserTest extends TestCase
     {
         return
             [
-                [
-                    $this->faker->userName(),
-                    $this->faker->word(),
-                    $this->faker->email(),
-                    $this->faker->word(), //password() - doesn't work with json
-                ],
+                $this->getTestData(),
+                $this->getTestData(),
+                $this->getTestData(),
             ];
     }
 
@@ -45,36 +43,42 @@ class CreateUserTest extends TestCase
      * @preserveGlobalState disabled
      * @dataProvider argumentsProvider
      */
-    public function testItReturnsSuccessfulResponse($firstName, $lastName, $email, $password): void
+    public function testItReturnsSuccessfulResponse($user, $password): void
     {
         $request = new Request(
             [],
             [],
             sprintf(
                 '{"email":"%s","firstName":"%s","lastName":"%s", "password":"%s"}',
-                $email,
-                $firstName,
-                $lastName,
+                $user->getEmail(),
+                $user->getFirstName(),
+                $user->getLastName(),
                 $password,
             )
         );
 
-        $createUserCommandHandlerStub = $this->createStub(CreateUserCommandHandler::class);
+        $createUserCommandHandler = $this->createStub(CreateUserCommandHandler::class);
+
+        $action = new CreateUser(
+            $createUserCommandHandler,
+            $this->getLogger(),
+        );
 
         /**
-         * @var CreateUserCommandHandler $createUserCommandHandlerStub
+         * @var Stub $createUserCommandHandler
          */
-        $action = new CreateUser($createUserCommandHandlerStub, $this->getLogger());
+        $createUserCommandHandler->method('handle')->willReturn($user);
 
         $response = $action->handle($request);
 
         $this->assertInstanceOf(SuccessfulResponse::class, $response);
         $this->expectOutputString(
             sprintf(
-                '{"success":true,"data":{"firstName":"%s","lastName":"%s","email":"%s"}}',
-                $firstName,
-                $lastName,
-                $email,
+                '{"success":true,"data":{"id":%d,"firstName":"%s","lastName":"%s","email":"%s"}}',
+                $user->getId(),
+                $user->getFirstName(),
+                $user->getLastName(),
+                $user->getEmail(),
             )
         );
 
@@ -89,12 +93,10 @@ class CreateUserTest extends TestCase
     {
         $request = new Request([], [], '');
 
-        $createUserCommandHandlerStub = $this->createStub(CreateUserCommandHandler::class);
-
-        /**
-         * @var CreateUserCommandHandler $createUserCommandHandlerStub
-         */
-        $action = new CreateUser($createUserCommandHandlerStub, $this->getLogger());
+        $action = new CreateUser(
+            $this->createStub(CreateUserCommandHandler::class),
+            $this->getLogger(),
+        );
 
         $response = $action->handle($request);
 
@@ -111,24 +113,23 @@ class CreateUserTest extends TestCase
      * @preserveGlobalState disabled
      * @dataProvider argumentsProvider
      */
-    public function testItReturnsErrorResponseIfNoEmailProvided($firstName, $lastName): void
+    public function testItReturnsErrorResponseIfNoEmailProvided($user, $password): void
     {
         $request = new Request(
             [],
             [],
             sprintf(
-                '{"email":"","firstName":"%s","lastName":"%s"}',
-                $firstName,
-                $lastName,
+                '{"email":"","firstName":"%s","lastName":"%s", "password":"%s"}',
+                $user->getFirstName(),
+                $user->getLastName(),
+                $password,
             )
         );
 
-        $createUserCommandHandlerStub = $this->createStub(CreateUserCommandHandler::class);
-
-        /**
-         * @var CreateUserCommandHandler $createUserCommandHandlerStub
-         */
-        $action = new CreateUser($createUserCommandHandlerStub, $this->getLogger());
+        $action = new CreateUser(
+            $this->createStub(CreateUserCommandHandler::class),
+            $this->getLogger(),
+        );
 
         $response = $action->handle($request);
 
@@ -138,5 +139,21 @@ class CreateUserTest extends TestCase
         );
 
         $response->send();
+    }
+
+    private function getTestData(): array
+    {
+        $password = $this->faker->password();
+
+        $user = new User(
+            $this->faker->firstName(),
+            $this->faker->lastName(),
+            $this->faker->email(),
+            $password,
+        );
+        $user->setId(mt_rand(1, mt_getrandmax()));
+        $user->setPassword($password);
+
+        return [$user, $password];
     }
 }

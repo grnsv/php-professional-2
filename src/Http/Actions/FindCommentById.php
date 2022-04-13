@@ -9,7 +9,6 @@ use Psr\Log\LoggerInterface;
 use App\Http\SuccessfulResponse;
 use App\Entities\Comment\Comment;
 use App\Exceptions\HttpException;
-use App\Factories\EntityManagerFactory;
 use App\Exceptions\CommentNotFoundException;
 use App\Repositories\CommentRepositoryInterface;
 
@@ -19,7 +18,6 @@ class FindCommentById implements ActionInterface
         private CommentRepositoryInterface $commentRepository,
         private LoggerInterface $logger,
     ) {
-        $this->commentRepository = $this->commentRepository ?? EntityManagerFactory::getInstance()->getRepository(Comment::class);
     }
 
     public function handle(Request $request): Response
@@ -34,7 +32,7 @@ class FindCommentById implements ActionInterface
             /**
              * @var Comment $comment
              */
-            $comment = $this->commentRepository->get($id);
+            $comment = $this->commentRepository->findById($id);
         } catch (CommentNotFoundException $e) {
             $this->logger->warning($e->getMessage());
             return new ErrorResponse($e->getMessage());

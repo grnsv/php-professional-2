@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use App\Drivers\Connection;
 use Psr\Log\LoggerInterface;
+use App\Entities\Comment\Comment;
 use App\Exceptions\CommentNotFoundException;
 use App\Repositories\CommentRepositoryInterface;
 
@@ -17,13 +18,18 @@ class DeleteCommentCommandHandler implements CommandHandlerInterface
     }
 
     /**
-     * @param DeleteEntityCommand $command
+     * @param EntityCommand $command
      */
     public function handle(CommandInterface $command): void
     {
         $this->logger->info("Delete comment command started");
 
-        $id = $command->getId();
+        /**
+         * @var Comment $comment
+         */
+        $comment = $command->getEntity();
+        $id = $comment->getId();
+
         if ($this->commentRepository->isExists($id)) {
             $this->connection->prepare($this->getSQL())->execute(
                 [

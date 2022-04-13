@@ -6,16 +6,18 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Http\ErrorResponse;
 use Psr\Log\LoggerInterface;
+use App\Commands\EntityCommand;
 use App\Http\SuccessfulResponse;
 use App\Exceptions\HttpException;
-use App\Commands\DeleteEntityCommand;
 use App\Exceptions\UserNotFoundException;
 use App\Commands\DeleteUserCommandHandler;
+use App\Repositories\UserRepositoryInterface;
 
 class DeleteUser implements ActionInterface
 {
     public function __construct(
         private DeleteUserCommandHandler $deleteUserCommandHandler,
+        private UserRepositoryInterface $userRepository,
         private LoggerInterface $logger,
     ) {
     }
@@ -24,7 +26,8 @@ class DeleteUser implements ActionInterface
     {
         try {
             $id = $request->query('id');
-            $this->deleteUserCommandHandler->handle(new DeleteEntityCommand($id));
+            $user = $this->userRepository->findById($id);
+            $this->deleteUserCommandHandler->handle(new EntityCommand($user));
         } catch (HttpException | UserNotFoundException $e) {
             $message = $e->getMessage();
             $this->logger->error($e);

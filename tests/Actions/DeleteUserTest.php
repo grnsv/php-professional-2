@@ -2,15 +2,14 @@
 
 namespace Tests\Actions;
 
-use PDOStatement;
 use App\Http\Request;
-use App\Drivers\Connection;
 use App\Http\ErrorResponse;
 use Tests\Traits\LoggerTrait;
 use PHPUnit\Framework\TestCase;
 use App\Http\Actions\DeleteUser;
 use App\Http\SuccessfulResponse;
 use App\Repositories\UserRepository;
+use App\Exceptions\UserNotFoundException;
 use App\Commands\DeleteUserCommandHandler;
 
 class DeleteUserTest extends TestCase
@@ -21,6 +20,8 @@ class DeleteUserTest extends TestCase
     {
         return
             [
+                [mt_rand(1, mt_getrandmax())],
+                [mt_rand(1, mt_getrandmax())],
                 [mt_rand(1, mt_getrandmax())],
             ];
     }
@@ -35,11 +36,13 @@ class DeleteUserTest extends TestCase
         $request = new Request(['id' => $id], [], '');
 
         $deleteUserCommandHandler = $this->createStub(DeleteUserCommandHandler::class);
+        $userRepositoryStub = $this->createStub(UserRepository::class);
 
-        /**
-         * @var DeleteUserCommandHandler $deleteUserCommandHandler
-         */
-        $action = new DeleteUser($deleteUserCommandHandler, $this->getLogger());
+        $action = new DeleteUser(
+            $deleteUserCommandHandler,
+            $userRepositoryStub,
+            $this->getLogger(),
+        );
 
         $response = $action->handle($request);
 
@@ -63,11 +66,13 @@ class DeleteUserTest extends TestCase
         $request = new Request([], [], '');
 
         $deleteUserCommandHandler = $this->createStub(DeleteUserCommandHandler::class);
+        $userRepositoryStub = $this->createStub(UserRepository::class);
 
-        /**
-         * @var DeleteUserCommandHandler $deleteUserCommandHandler
-         */
-        $action = new DeleteUser($deleteUserCommandHandler, $this->getLogger());
+        $action = new DeleteUser(
+            $deleteUserCommandHandler,
+            $userRepositoryStub,
+            $this->getLogger(),
+        );
 
         $response = $action->handle($request);
 
@@ -88,32 +93,21 @@ class DeleteUserTest extends TestCase
     {
         $request = new Request(['id' => $id], [], '');
 
-        /**
-         * @var Stub $connectionStub
-         */
-        $connectionStub = $this->createStub(Connection::class);
-        $connectionStub->method('prepare')->willReturn(
-            $this->createStub(PDOStatement::class)
+        $deleteUserCommandHandler = $this->createStub(DeleteUserCommandHandler::class);
+        $userRepositoryStub = $this->createStub(UserRepository::class);
+
+        $action = new DeleteUser(
+            $deleteUserCommandHandler,
+            $userRepositoryStub,
+            $this->getLogger(),
         );
+
         /**
          * @var Stub $userRepositoryStub
          */
-        $userRepositoryStub = $this->createStub(UserRepository::class);
-        $userRepositoryStub->method('isUserExists')->willReturn(false);
-
-        /**
-         * @var UserRepository $userRepositoryStub
-         * @var Connection $connectionStub
-         */
-        $deleteUserCommandHandler = new DeleteUserCommandHandler(
-            $userRepositoryStub,
-            $connectionStub,
-            $this->getLogger(),
+        $userRepositoryStub->method('findById')->willThrowException(
+            new UserNotFoundException('User not found')
         );
-        /**
-         * @var DeleteUserCommandHandler $deleteUserCommandHandler
-         */
-        $action = new DeleteUser($deleteUserCommandHandler, $this->getLogger());
 
         $response = $action->handle($request);
 

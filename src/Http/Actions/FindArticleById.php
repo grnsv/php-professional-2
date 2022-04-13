@@ -9,7 +9,6 @@ use Psr\Log\LoggerInterface;
 use App\Http\SuccessfulResponse;
 use App\Entities\Article\Article;
 use App\Exceptions\HttpException;
-use App\Factories\EntityManagerFactory;
 use App\Exceptions\ArticleNotFoundException;
 use App\Repositories\ArticleRepositoryInterface;
 
@@ -19,7 +18,6 @@ class FindArticleById implements ActionInterface
         private ArticleRepositoryInterface $articleRepository,
         private LoggerInterface $logger,
     ) {
-        $this->articleRepository = $this->articleRepository ?? EntityManagerFactory::getInstance()->getRepository(Article::class);
     }
 
     public function handle(Request $request): Response
@@ -34,7 +32,7 @@ class FindArticleById implements ActionInterface
             /**
              * @var Article $article
              */
-            $article = $this->articleRepository->get($id);
+            $article = $this->articleRepository->findById($id);
         } catch (ArticleNotFoundException $e) {
             $this->logger->warning($e->getMessage());
             return new ErrorResponse($e->getMessage());

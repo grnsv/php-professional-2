@@ -8,13 +8,12 @@ use Faker\Generator;
 use App\Drivers\Connection;
 use App\Entities\User\User;
 use Tests\Traits\LoggerTrait;
+use App\Commands\EntityCommand;
 use PHPUnit\Framework\TestCase;
 use App\Entities\Article\Article;
-use App\Commands\CreateEntityCommand;
 use App\Repositories\ArticleRepository;
 use App\Exceptions\ArticleNotFoundException;
 use App\Commands\CreateArticleCommandHandler;
-use App\Repositories\UserRepositoryInterface;
 
 class CreateArticleCommandTest extends TestCase
 {
@@ -33,16 +32,11 @@ class CreateArticleCommandTest extends TestCase
 
     public function argumentsProvider(): iterable
     {
-        $user = new User(
-            $this->faker->userName(),
-            $this->faker->word(),
-            $this->faker->email(),
-            $this->faker->password(),
-        );
-        $user->setId(mt_rand(1, mt_getrandmax()));
         return
             [
-                [$user, $this->faker->word(), $this->faker->text()],
+                $this->getTestData(),
+                $this->getTestData(),
+                $this->getTestData(),
             ];
     }
 
@@ -50,48 +44,57 @@ class CreateArticleCommandTest extends TestCase
      * @throws ArticleNotFoundException
      * @dataProvider argumentsProvider
      */
-    public function testItSavesArticleToDatabase($author, $title, $text): void
+    public function testItSavesArticleToDatabase($user, $article): void
     {
-        /**
-         * @var Stub $connectionStub
-         */
+        $articleRepositoryStub = $this->createStub(ArticleRepository::class);
         $connectionStub = $this->createStub(Connection::class);
-        /**
-         * @var MockObject $statementMock
-         */
         $statementMock = $this->createMock(PDOStatement::class);
 
-        $connectionStub->method('prepare')->willReturn($statementMock);
-        $statementMock
-            ->expects($this->once())
-            ->method('execute')
-            ->with([
-                ':author_id' => $author->getId(),
-                ':title' => $title,
-                ':text' => $text,
-            ]);
-
-        /**
-         * @var Connection $connectionStub
-         */
         $createArticleCommandHandler = new CreateArticleCommandHandler(
-            new ArticleRepository(
-                $connectionStub,
-                $this->createStub(UserRepositoryInterface::class),
-                $this->getLogger(),
-            ),
+            $articleRepositoryStub,
             $connectionStub,
             $this->getLogger(),
         );
 
-        $command = new CreateEntityCommand(
-            new Article(
-                $author,
-                $title,
-                $text
-            )
-        );
+        /**
+         * @var Stub $connectionStub
+         */
+        $connectionStub->method('prepare')->willReturn($statementMock);
+
+        /**
+         * @var MockObject $statementMock
+         */
+        $statementMock
+            ->expects($this->once())
+            ->method('execute')
+            ->with([
+                ':author_id' => $user->getId(),
+                ':title' => $article->getTitle(),
+                ':text' => $article->getText(),
+            ]);
+
+        $command = new EntityCommand($article);
 
         $createArticleCommandHandler->handle($command);
+    }
+
+    private function getTestData(): array
+    {
+        $user = new User(
+            $this->faker->firstName(),
+            $this->faker->lastName(),
+            $this->faker->email(),
+            $this->faker->password(),
+        );
+        $user->setId(mt_rand(1, mt_getrandmax()));
+
+        $article = new Article(
+            $user,
+            $this->faker->title(),
+            $this->faker->text(),
+        );
+        $article->setId(mt_rand(1, mt_getrandmax()));
+
+        return [$user, $article];
     }
 }

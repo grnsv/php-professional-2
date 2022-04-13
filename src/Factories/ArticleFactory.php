@@ -2,22 +2,22 @@
 
 namespace App\Factories;
 
-use App\Entities\User\User;
-use App\Commands\GetCommand;
 use JetBrains\PhpStorm\Pure;
+use App\Container\DIContainer;
 use App\Entities\Article\Article;
 use App\Decorator\ArticleDecorator;
+use App\Repositories\UserRepository;
 
 final class ArticleFactory implements ArticleFactoryInterface
 {
     #[Pure] public function create(ArticleDecorator $articleDecorator): Article
     {
         /**
-         * @var EntityManagerFactoryInterface $entityMangerFactory
+         * @var DIContainer $container
          */
-        $entityMangerFactory = EntityManagerFactory::getInstance();
-        $command = new GetCommand($entityMangerFactory->getRepository(User::class));
-        $author = $command->handle($articleDecorator->authorId);
+        $container = DIContainer::getInstance();
+        $userRepository = $container->get(UserRepository::class);
+        $author = $userRepository->findById($articleDecorator->authorId);
         return new Article(
             $author,
             $articleDecorator->title,

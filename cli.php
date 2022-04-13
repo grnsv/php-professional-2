@@ -5,9 +5,9 @@ use App\Entities\Like\Like;
 use App\Entities\User\User;
 use Psr\Log\LoggerInterface;
 use App\Container\DIContainer;
+use App\Commands\EntityCommand;
 use App\Entities\Article\Article;
 use App\Entities\Comment\Comment;
-use App\Commands\CreateEntityCommand;
 use App\Exceptions\NotFoundException;
 use App\Factories\EntityManagerFactory;
 use App\Commands\CommandHandlerInterface;
@@ -51,7 +51,7 @@ if (isset($container)) {
             Like::class => $container->get(CreateLikeCommandHandler::class),
         };
 
-        $commandHandler->handle(new CreateEntityCommand($entity));
+        $commandHandler->handle(new EntityCommand($entity));
     } catch (Exception $exception) {
         $logger->error($exception->getMessage(), ['exception' => $exception]);
 

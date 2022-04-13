@@ -6,5 +6,5 @@ use App\Entities\Article\Article;
 
 interface ArticleRepositoryInterface extends EntityRepositoryInterface
 {
-    public function get(int $id): Article;
+    public function findById(int $id): Article;
 }

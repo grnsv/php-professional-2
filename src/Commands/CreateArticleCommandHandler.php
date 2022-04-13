@@ -18,9 +18,9 @@ class CreateArticleCommandHandler implements CommandHandlerInterface
     }
 
     /**
-     * @param CreateEntityCommand $command
+     * @param EntityCommand $command
      */
-    public function handle(CommandInterface $command): void
+    public function handle(CommandInterface $command): ArticleInterface
     {
         $this->logger->info("Create article command started");
 
@@ -28,15 +28,13 @@ class CreateArticleCommandHandler implements CommandHandlerInterface
          * @var Article $article
          */
         $article = $command->getEntity();
-        $authorId = $article->getAuthor()->getId();
-        $title = $article->getTitle();
 
         try {
             $this->connection->beginTransaction();
             $this->connection->prepare($this->getSQL())->execute(
                 [
-                    ':author_id' => $authorId,
-                    ':title' => $title,
+                    ':author_id' => $article->getAuthor()->getId(),
+                    ':title' => $article->getTitle(),
                     ':text' => $article->getText(),
                 ]
             );
@@ -46,7 +44,17 @@ class CreateArticleCommandHandler implements CommandHandlerInterface
             $this->connection->rollback();
             print "Error!: " . $e->getMessage() . PHP_EOL;
         }
-        $this->logger->info("Article created authorId: $authorId title: $title");
+
+        $data = [
+            'id' => $article->getId(),
+            'authorId' => $article->getAuthor()->getId(),
+            'title' => $article->getTitle(),
+            'text' => $article->getText(),
+        ];
+
+        $this->logger->info('Created new Article', $data);
+
+        return $article->getId() ? $article : $this->articleRepository->findById($this->connection->lastInsertId());
     }
 
     public function getSQL(): string
